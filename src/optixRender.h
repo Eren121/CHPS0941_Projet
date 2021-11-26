@@ -1,25 +1,18 @@
 #ifndef OPTIXVIEWER_H
 #define OPTIXVIEWER_H
 
-#include <QFile> //to read ptx file
-#include <QDebug>
 #include "camera.h"
 #include "CUDABuffer.h"
 #include "LaunchParams.h"
 #include "vec.h"
 #include <optix.h>
-
 #include <cuda_runtime.h>
-#include <optix.h>
 #include <optix_stubs.h>
 #include <cuda_gl_interop.h>
-#include <QFile>
 #include <sstream>
+#include <iostream>
 
-#include "3dobject/volume.h"
-#include "scene.h"
-#include "QTransferFunction.h"
-#include <qglviewer.h>
+#include "Scene.hpp"
 
 /**
     OptixRender est notre ray tracer. Cette objet nous permet de créer un context Optix,
@@ -46,7 +39,6 @@ class OptixRender
 public:
     OptixRender();
     OptixRender(Scene *modele);
-    OptixRender(Scene *modele, const int nbGPU, const int numGPU);
 
     ~OptixRender();
     LaunchParams* getLaunchParams(){return &launchParams;}
@@ -71,49 +63,16 @@ public:
     */
     void downloadPixels(uint32_t h_pixels[]);
 
-    void downloadPixels(uint32_t h_pixels[], size_t offset,size_t y_offset, size_t size);
-
-    void setCamera(qglviewer::Camera* c0, const int index);
-    void setCamera(const Cam &cam, const int index);
+    void setCamera(const Camera &cam);
     /**
         Permet de fixer la cameré OptiX.
         La cameré passé en paramètre à les propriétés de la caméra OpenGL pour avoir une superposition correcte.
     */
 
-    /* Ensemble de setter qui permette de changer les options de rendu durant l'execution*/
-    void setRenderingMethode(unsigned char methodes);
-    void setSampler(float value);
-    void setLut(unsigned char lut);
-    void setLutFunction(QTransferFunction* lutFunction);
-    void setRange(float min, float max);
-    void setMinIntensity(float min);
-    void setMaxIntensity(float max);
-    void setRepere(unsigned char value);
-    void setBackground(unsigned char value);
-    void setBoundingBox(unsigned char value);
-    void setPlane(unsigned char value);
-    void setRedLightColor(unsigned char value);
-    void setGreenLightColor(unsigned char value);
-    void setBlueLightColor(unsigned char value);
-    void setLightPositionWithCamera(unsigned char v);
-    void setLightPosX(float p);
-    void setLightPosY(float p);
-    void setLightPosZ(float p);
-    void setDeplacementMode(bool b) { launchParams.frame.deplacementMode = b ? 1 : 0;}
-    float getSampler() const;
-    QTransferFunction* getLut() const;
-
-    void loadVolume(QString path);
-    int loadMesh(const QString &mesh);
-
     void updateSBTBuffer();
 
-    Scene* getModele();
-    QString getName(const int &id);
-    void translateVolume(vec3f t);
-
     void buildIAS(Scene *modele, OptixTraversableHandle volume_traversable, OptixTraversableHandle mesh_traversable);
-    void loadLut(const QString &path);
+
     /* helper function that initializes optix and checks for errors */
     void initOptix();
 
@@ -125,12 +84,9 @@ public:
       to use. in this simple example, we use a single module from a
       single .cu file, using a single embedded ptx string */
     void createModules();
-    void createCylinderModule();
     void createVolumeModule();
     void createMeshModule();
-    void createSphereModule();
-    void createConeModule();
-    void createBboxModule();
+
     /* does all setup for the raygen program(s) we are going to use */
     void createRaygenPrograms();
 
@@ -140,11 +96,8 @@ public:
     /* does all setup for the hitgroup program(s) we are going to use */
     void createHitgroupPrograms();
     void createVolumeHitgroupPrograms();
-    void createSphereHitgroupPrograms();
     void createMeshHithtoupPrograms();
-    void createCylinderHitgroupPrograms();
-    void createConeHithtoupPrograms();
-    void createBboxHitgroupPrograms();
+   
     /* assembles the full pipeline of all programs */
     void createPipeline();
 
@@ -175,11 +128,6 @@ public:
 
     void render(const int widthOffset, const int heightOffset, int nbXRayon, int nbYRayon);
 
-
-    void getDepthMap(float *depthMap, const size_t size);
-    void getObjectMap(int *depthMap, const size_t size);
-
-    static void colorizeDepthMap(float *depthMap, float *colorizeDepthMap, const size_t size);
 private :
 
     /* SBT record for a raygen program */
@@ -234,12 +182,8 @@ private :
 
     /* @{ the module that contains out device programs */
     OptixModule                 volume_module;
-    OptixModule                 cylinder_module;
     OptixModule                 mesh_module;
-    OptixModule                 sphere_module;
-    OptixModule                 cone_module;
     OptixModule                 raygen_module;
-    OptixModule                 bbox_module;
 
     OptixModuleCompileOptions   moduleCompileOptions = {};
     /* @} */
@@ -263,30 +207,22 @@ private :
     /* @} */
 
     CUDABuffer colorBuffer;
-    CUDABuffer depthMapBuffer;
-    CUDABuffer objectMapBuffer;
 
-    CUDABuffer iasBuffer, masBuffer, vasBuffer/*, bboxasBuffer*/;
+    CUDABuffer iasBuffer, masBuffer, vasBuffer;
     OptixTraversableHandle mas{0};
     OptixTraversableHandle vas{0};
     OptixTraversableHandle ias{0};
-//    OptixTraversableHandle bboxas{0};
 
     Scene* modele;
     bool isVolumeDataModified = false;
     bool isMeshDataModified = false;
     bool isSBTDataModified = false;
 
-    QString ptx_volume_path = "./devicePrograms.ptx";
-    QString ptx_cylinder_path = "./cylinder.ptx";
-    QString ptx_sphere_path = "./sphere.ptx";
-    QString ptx_mesh_path = "./mesh.ptx";
-    QString ptx_cone_path = "./cone.ptx";
-    QString ptx_raygen_path = "./raygen_multiGPU.ptx";
-//    QString ptx_bbox_path = "./bbox.ptx";
+    std::string ptx_volume_path = "./devicePrograms.ptx";;
+    std::string ptx_mesh_path = "./mesh.ptx";
+    std::string ptx_raygen_path = "./raygen.ptx";
 
     std::vector<HitgroupRecord> hitgroupRecords;
-
 
     //FOR VAS
     OptixAabb *aabb;
@@ -294,11 +230,6 @@ private :
     CUDABuffer vasTempBuffer;
     CUDABuffer vasOutputBuffer;
 
-    //FOR BBOXAS
-//    OptixAabb *bbox;
-//    CUdeviceptr d_bboxaabb;
-//    CUDABuffer bboxasTempBuffer;
-//    CUDABuffer bboxasOutputBuffer;
     //FOR MAS
     CUDABuffer masTempBuffer;
     CUDABuffer masOutputBuffer;
@@ -306,9 +237,6 @@ private :
     //FOR IAS
     CUDABuffer iasTempBuffer;
     CUDABuffer iasOutputBuffer;
-
-
-    QTransferFunction* qtf;
 };
 
 #endif // OPTIXVIEWER_H

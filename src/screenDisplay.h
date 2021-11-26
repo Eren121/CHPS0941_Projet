@@ -6,13 +6,15 @@
 
 #include "vec.h"
 #include "camera.h"
-
+#include "Scene.hpp"
 
 class ScreenDisplay {
     public :
 
         ScreenDisplay(const int width = 680, const int height = 420,const std::string title = "VSProject");
         ~ScreenDisplay();
+
+        void createSceneEntities();
 
         void run();
 
@@ -29,4 +31,5 @@ class ScreenDisplay {
     std::string m_windowTitle = "VSProject" ;
     Camera cam;
     std::vector<uint32_t> pixels;
+    Scene scene;
 };

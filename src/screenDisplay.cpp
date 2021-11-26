@@ -36,6 +36,9 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     glfwSetKeyCallback(window, key_callback);
 
     pixels.resize(width*height);
+
+    //Creation des objets de la scene
+    createSceneEntities();
 }
 
 
@@ -43,6 +46,15 @@ ScreenDisplay::~ScreenDisplay(){
     glfwDestroyWindow(window);
     glfwTerminate();
 
+}
+
+
+void ScreenDisplay::createSceneEntities(){
+    //Creation de la scene a afficher
+    //Ajout d'un cube unitaire dans la scene
+    TriangleMesh *t= new TriangleMesh();
+    t->addUnitCube();
+    scene.addMesh(t);
 }
 
 void ScreenDisplay::run(){

@@ -56,6 +56,12 @@ add_executable(VSProject
   ./src/screenDisplay.h 
   ./src/vec.h 
   ./src/camera.h
+  ./src/Scene.hpp
+  ./src/Scene.cpp
+  ./src/trianglemesh.h
+  ./src/trianglemesh.cpp
+  ./src/optixRender.cpp
+  ./src/optixRender.h
 )
 
 include_directories(${OptiX_INCLUDE})
