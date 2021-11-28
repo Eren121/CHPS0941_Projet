@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <iostream>
-
+#include <optix.h>
+#include <optix_stubs.h>
+#include <optix_function_table_definition.h>
 #include "screenDisplay.h"
 
 int main(int argc, char** argv){

@@ -1,17 +1,15 @@
 #ifndef VEC_H
 #define VEC_H
-/*
+
 #include <cuda.h>
 #ifndef DEVICE
-#include <QVector3D>
 #define __both__ __host__
 #endif
 
 #ifdef DEVICE
 #define __both__ __device__
 #endif
-*/
-#define __both__
+
 #include <cmath>
 #include <cuda.h>
 #include <optix.h>
@@ -51,7 +49,7 @@ struct vec_t<T,3>{
     __both__ vec_t<T,3>(){x = 0;}
     __both__ vec_t<T,3>(T val){x = val; y = val; z = val;}
     __both__ vec_t<T,3>(T dx, T dy, T dz){x = dx; y = dy; z = dz;}
-    //__both__ vec_t<T,3>(float3 f3):x(f3.x),y(f3.y),z(f3.z){}
+    __both__ vec_t<T,3>(float3 f3):x(f3.x),y(f3.y),z(f3.z){}
 
 
     T x,y,z;

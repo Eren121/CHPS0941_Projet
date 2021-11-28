@@ -7,6 +7,7 @@
 #include "vec.h"
 #include "camera.h"
 #include "Scene.hpp"
+#include "optixRender.h"
 
 class ScreenDisplay {
     public :
@@ -17,6 +18,10 @@ class ScreenDisplay {
         void createSceneEntities();
 
         void run();
+        
+        void update();
+        void render();
+        void drawScene();
 
         void resize(const int width, const int height);
 
@@ -29,7 +34,9 @@ class ScreenDisplay {
     vec2i m_screenSize;
     GLFWwindow* window;
     std::string m_windowTitle = "VSProject" ;
-    Camera cam;
+    Camera m_camera;
     std::vector<uint32_t> pixels;
+    GLuint                fbTexture {0};
     Scene scene;
+    OptixRender *optixRender;
 };

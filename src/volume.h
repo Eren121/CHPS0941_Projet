@@ -3,7 +3,6 @@
 
 #include "vec.h"
 #include "CUDABuffer.h"
-#include <QString>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -12,16 +11,8 @@
 #include <cuda_runtime_api.h>
 #include <texture_fetch_functions.h>
 #include <optix_types.h>
-#include <QDebug>
 #include "LaunchParams.h"
-#include "aabbobject.h"
 
-
-#include "itkImage.h"
-#include "itkGDCMImageIO.h"
-#include "itkGDCMSeriesFileNames.h"
-#include "itkImageSeriesReader.h"
-#include "itkImageFileWriter.h"
 
 
 /**
@@ -32,58 +23,21 @@
     Pour stocker les données, nous utilisons des textures ce qui nous permettent une interpolation tri-linéaire à la récupération des valeurs
     et de meilleurs performances.
 */
-class Volume : public AabbObject
+class Volume
 {
 public:
     Volume();
-    Volume(QString path);
-    ~Volume();
+    Volume(std::string path);
 
-    /**
-        \brief Fonction tempons pour appeler la bonne fonction de chargement de volume.
-    */
-    void loadVolume(const QString &path);
 
-    /**
-        \brief Charge un volume sous le format DAT
-    */
-    void loadDATVolume(const QString &path);
-
-    /**
-        \brief Charge un volume sous le format B8
-    */
-    void loadB8Volume(const QString &path);
-
-    /**
-        \brief Charge un volume sous le format Dicom grace a ITK
-    */
-    void loadDicomVolume(const QString &path);
+   void loadVolume(const std::string &path);
 
     /**
        \Brief Créer la texture à partir des données chargées.
     */
     void createTexture();
 
-    /**
-        \brief Realise la rotation du volume ----> pas implemente
-    */
-    virtual void rotate(const float &rx, const float &ry, const float &rz) override ;
-
-    /**
-        \brief Realise la rotation du volume ----> pas implemente
-    */
-    virtual void rotate(const QQuaternion &q) override ;
-
-
-    /**
-        \brief Redimensioonne le volume par un coefficient multiplicateur
-    */
-    virtual void scale(const vec3f &d) override ;
-
-    /**
-        \brief Set la taille du volume par la valeur newDIm
-    */
-    virtual void resize(const vec3f &newDim) override ;
+    virtual void resize(const vec3f &newDim);
 
     /**
        \brief Retourne la dimension dans l'espace
@@ -100,76 +54,60 @@ public:
     */
     vec3i getPixelSize() const;
 
-    /**
-        \brief Retourne un tableau representant les valeurs de la texture brut ( soit de type CHAR ou SHORT)
-    */
-    void* getData() const { return pData;}
 
     /**
-        \brief Retourne le type de donnees lus des fichiers : SHORT ou CHAR
+       \brief Retourne le CudaBuffer qui pointe vers les données sur le gpu.
     */
+    CUDABuffer getCudaBuffer() const;
+
+    /**
+       \brief Retourne le pointeur vers les données sur le gpu
+    */
+    CUdeviceptr getDevicePointer() const;
+
+
+    void* getData() const { return pData;}
     int getDataType() const {return type;}
     /**
        \brief Retourne le pointeur de la texture 3D représentant les données
     */
-    cudaArray_t getTextureDevicePointer(const int iGPU = 0 ) const;
+    cudaArray_t getTextureDevicePointer() const;
 
     /**
        \brief Retourne la texture 3d représentant les données
     */
-    cudaTextureObject_t getTextureReference(const int iGPU = 0) const;
+    cudaTextureObject_t getTextureReference() const;
+    virtual void getAabb( float results[6]);
+    virtual void getSbt(sbtData *sbt);
+
 
     /**
-        \brief REmplis results par les valeurs de la aabb du volume
+       \brief Permet d'envoyer les données de texture au gpu
     */
-    virtual void getAabb( float results[6]) override;
-
+    void uploadCudaBuffer();
     /**
-        \brief Remplis la structure sbtData par les donnees utiles du volume pour le GPU = iGPU
+        \brief Resize le buffer sur le device
     */
-    virtual void getSbt(sbtData *sbt, const int iGPU = 0) override;
+    void resizeCudaBuffer();
 
-    /**
-        \brief Ajoute un plan de decoupe sur le volume
-    */
-    void addSlice(Slice slice);
-
-    /**
-        \brief Ajoute un plan de decoupe definis par 3 points
-    */
-    void addSlice(vec3f p1, vec3f p2, vec3f p3);
-
-    /**
-        \brief Supprime tout les plans de decoupes du volumes
-    */
-    bool clearSlice();
-
-    /**
-        \brief Supprime la slice dont l'indice est passe en parametre
-    */
-    void rmSlice(const int id);
-
-    /**
-        \brief Converti un volume en un QJsonObject
-    */
-    virtual QJsonObject toJson() override;
+    void translate(const vec3f &t);
 
 private :
-    enum DATA_TYPE{SHORT,UCHAR}; //type de donnees utilisees par le fichier pour definir pData
-    void *pData;  //data representant la texture "brute"
-    unsigned char type;//type de donnees utilisees par le fichier pour definir pData
-    vec3f worldSize; //La taille du volume
-    vec3i pixelSize; //la dimension du volume en voxel
-    unsigned short maxIntensity = 0; //l'intensite max de la texture du volume
-    unsigned short minIntensity = 255; //l'intensite min de la texture
+    enum DATA_TYPE{SHORT,UCHAR};
+    void *pData;
+    unsigned char type;
+    CUDABuffer data;
+    vec3f worldSize;
+    vec3i pixelSize;
+    vec3f position;
+    unsigned short maxIntensity = 0;
+    unsigned short minIntensity = 255;
+    OptixAabb* aabb;
 
-    cudaTextureObject_t *cudaTexture; //Texture par GPU
-    cudaArray_t *d_array; //pointeur vers le tableau de la texture par GPU
-
-    //slice
-    std::vector<Slice> slices; //Listes de slices
-    CUDABuffer *sliceBuffer; //Listes de slice sur le gpu
-
+    cudaTextureObject_t cudaTexture = 0;
+    cudaArray_t d_array = 0;
+    cudaResourceDesc resDesc;
+    cudaTextureDesc texDesc = {};
 };
 
 #endif // VOLUME_H

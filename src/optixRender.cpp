@@ -66,7 +66,6 @@ void OptixRender::initialize(Scene *modele){
 void OptixRender::buildIAS(Scene* modele, OptixTraversableHandle volume_traversable, OptixTraversableHandle mesh_traversable){
     std::vector<OptixInstance> instances;
     instances.resize(2);
-
     float transform[12];
     transform[0] = 1.0f; transform[1] = 0.0f; transform[2] = 0.0f; transform[3] = 0.0f;
     transform[4] = 0.0f; transform[5] = 1.0f; transform[6] = 0.0f; transform[7] = 0.0f;
@@ -82,7 +81,6 @@ void OptixRender::buildIAS(Scene* modele, OptixTraversableHandle volume_traversa
     sbtOffset +=  modele->getNumVolume();
 
     //instance 1 for mesh
-
     memcpy(instances[1].transform, transform, sizeof(float)*12);
     instances[1].instanceId = 0;
     instances[1].sbtOffset = (int)sbtOffset;
@@ -137,7 +135,7 @@ void OptixRender::buildIAS(Scene* modele, OptixTraversableHandle volume_traversa
    iasTempBuffer.alloc(blasBufferSizes.tempSizeInBytes);
    iasOutputBuffer.alloc(blasBufferSizes.outputSizeInBytes);
    OPTIX_CHECK(optixAccelBuild(optixContext,
-                               /* stream */0,
+                               0,//stream
                                &accelOptions,
                                &input,
                                1,
@@ -160,7 +158,7 @@ void OptixRender::buildIAS(Scene* modele, OptixTraversableHandle volume_traversa
    compactedSizeBuffer.download(&compactedSize,1);
    iasBuffer.alloc(compactedSize);
    OPTIX_CHECK(optixAccelCompact(optixContext,
-                                 /*stream:*/0,
+                                 0,//stream
                                  ias,
                                  iasBuffer.d_pointer(),
                                  iasBuffer.sizeInBytes,
@@ -170,7 +168,8 @@ void OptixRender::buildIAS(Scene* modele, OptixTraversableHandle volume_traversa
    // ==================================================================
    // aaaaaand .... clean up
    // ==================================================================
-   //compactedSizeBuffer.free();
+   compactedSizeBuffer.free();
+   
 
 }
 
@@ -234,11 +233,6 @@ void OptixRender::createVolumeModule(){
     strStream << inFile.rdbuf(); //read the file
     std::string str = strStream.str(); //str holds the content of the file
     inFile.close();
-  //  QFile ptx(ptx_volume_path);
-    //ptx.open(QFile::ReadOnly);
-
-    //std::string ptx_d = ptx.readAll().toStdString() ;
-    //ptx.close();
 
     OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
                                          &moduleCompileOptions,
@@ -252,17 +246,19 @@ void OptixRender::createVolumeModule(){
 void OptixRender::createMeshModule(){
     char log[2048];
     size_t sizeof_log = sizeof( log );
-    QFile ptx(ptx_mesh_path);
-    ptx.open(QFile::ReadOnly);
 
-    std::string ptx_d = ptx.readAll().toStdString() ;
-    ptx.close();
-
+    std::ifstream inFile;
+    inFile.open(ptx_mesh_path); //open the input file
+    std::stringstream strStream;
+    strStream << inFile.rdbuf(); //read the file
+    std::string str = strStream.str(); //str holds the content of the file
+    inFile.close();
+    
     OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
                                          &moduleCompileOptions,
                                          &pipelineCompileOptions,
-                                         ptx_d.c_str(),
-                                         ptx_d.size(),
+                                         str.c_str(),
+                                         str.size(),
                                          log,&sizeof_log,
                                          &mesh_module
                                          ));
@@ -275,17 +271,18 @@ void OptixRender::createRaygenPrograms(){
 
     char log[2048];
     size_t sizeof_log = sizeof( log );
-    QFile ptx(ptx_raygen_path);
-    ptx.open(QFile::ReadOnly);
-
-    std::string ptx_d = ptx.readAll().toStdString() ;
-    ptx.close();
+    std::ifstream inFile;
+    inFile.open(ptx_raygen_path); //open the input file
+    std::stringstream strStream;
+    strStream << inFile.rdbuf(); //read the file
+    std::string str = strStream.str(); //str holds the content of the file
+    inFile.close();
 
     OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
                                          &moduleCompileOptions,
                                          &pipelineCompileOptions,
-                                         ptx_d.c_str(),
-                                         ptx_d.size(),
+                                         str.c_str(),
+                                         str.size(),
                                          log,&sizeof_log,
                                          &raygen_module
                                          ));
@@ -293,7 +290,8 @@ void OptixRender::createRaygenPrograms(){
     OptixProgramGroupOptions pgOptions = {};
     OptixProgramGroupDesc pgDesc    = {};
     pgDesc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
-    pgDesc.raygen.module            = raygen_module;
+ //   pgDesc.raygen.module            = raygen_module;
+ pgDesc.raygen.module            = raygen_module;
     pgDesc.raygen.entryFunctionName = "__raygen__renderFrame";
 
     // OptixProgramGroup raypg;
@@ -315,6 +313,7 @@ void OptixRender::createMissPrograms(){
     OptixProgramGroupOptions pgOptions = {};
     OptixProgramGroupDesc pgDesc    = {};
     pgDesc.kind                     = OPTIX_PROGRAM_GROUP_KIND_MISS;
+    //pgDesc.miss.module            = raygen_module;
     pgDesc.miss.module            = raygen_module;
     pgDesc.miss.entryFunctionName = "__miss__radiance";
 
@@ -335,10 +334,10 @@ void OptixRender::createMissPrograms(){
 void OptixRender::createHitgroupPrograms(){
     hitgroupPGs.resize(2);
 
-    qDebug() << "Create volumic hitgroup programs...";
+    std::cout << "Create volumic hitgroup programs..." << std::endl;
     createVolumeHitgroupPrograms();
 
-    qDebug() << "Create mesh hitgroup programs...";
+    std::cout << "Create mesh hitgroup programs..." << std::endl;
     createMeshHithtoupPrograms();
 }
 
@@ -347,11 +346,11 @@ void OptixRender::createVolumeHitgroupPrograms(){
     OptixProgramGroupDesc pgDesc    = {};
     pgDesc.kind                     = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
     pgDesc.hitgroup.moduleCH            = volume_module;
-    pgDesc.hitgroup.entryFunctionNameCH = "__closesthit__radiance";
+    pgDesc.hitgroup.entryFunctionNameCH = "__closesthit__volume_radiance";
     pgDesc.hitgroup.moduleAH            = volume_module;
-    pgDesc.hitgroup.entryFunctionNameAH = "__anyhit__radiance";
+    pgDesc.hitgroup.entryFunctionNameAH = "__anyhit__volume_radiance";
     pgDesc.hitgroup.moduleIS = volume_module;
-    pgDesc.hitgroup.entryFunctionNameIS = "__intersection__voxel";
+    pgDesc.hitgroup.entryFunctionNameIS = "__intersection__volume";
 
     char log[2048];
     size_t sizeof_log = sizeof( log );
@@ -460,16 +459,22 @@ void OptixRender::buildSBT(){
     // ------------------------------------------------------------------
     for(size_t i = 0; i < modele->getNumVolume(); ++i){
         HitgroupRecord rec;
-        OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupPGs[VOLUME_RENDERING]],&rec));
+        memset(&rec.sbt,0,sizeof(sbtData));
+        OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupPGs[VOLUME_RENDERING],&rec));
         modele->getVolumeSbt(i,&rec.sbt);
+        if( i == 0)
+          rec.sbt.volumeData.color = vec3f(1.f,0.f,0.f);
+        else 
+          rec.sbt.volumeData.color = vec3f(0.f,1.f,0.f);
         hitgroupRecords.push_back(rec);
     }
+
     //Create HitGroup for mesh object
     const int numMeshObjects = (int)modele->getNumMesh();
     for (int i=0; i<numMeshObjects;i++) {
       HitgroupRecord rec;
       memset(&rec.sbt,0,sizeof(sbtData));
-      rec.sbt.meshData = modele->getMesh(i)->getSBT();
+      modele->getMeshSbt(i,&rec.sbt);
       OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupPGs[MESH_RENDERING],&rec));
       hitgroupRecords.push_back(rec);
     }
@@ -495,13 +500,14 @@ void OptixRender::buildMeshAccel(){
   d_vertices.resize(nb_obj_mesh);
   d_indices.resize(nb_obj_mesh);
   uint32_t triangleInputFlags[1] = { 0 };
+  
   for(int i = 0; i < (int)nb_obj_mesh; ++i){
     input[i].type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
 
     // create local variables, because we need a *pointer* to the
     // device pointers
-    d_vertices[i] = modele->getMesh(i)->getVertexDevicePointer(launchParams.multi_gpu.numGPU);
-    d_indices[i]  = modele->getMesh(i)->getIndexDevicePointer(launchParams.multi_gpu.numGPU);
+    d_vertices[i] = modele->getMesh(i)->getVertexDevicePointer();
+    d_indices[i]  = modele->getMesh(i)->getIndexDevicePointer();
 
     input[i].triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
     input[i].triangleArray.vertexStrideInBytes = sizeof(vec3f);
@@ -598,16 +604,18 @@ void OptixRender::buildMeshAccel(){
    // ==================================================================
    //compactedSizeBuffer.free();
 }
-/*
+
 void OptixRender::buildVolumeAccel(){
     const int nb_obj_volumic = modele->getNumVolume();
     OptixBuildInput *input = (OptixBuildInput*)malloc(sizeof(OptixBuildInput) *nb_obj_volumic );
+    
     //Create accel for volume
     aabb = (OptixAabb*)malloc(sizeof(OptixAabb)*nb_obj_volumic);
 
       for(size_t i = 0; i < nb_obj_volumic; ++i){
           modele->getAabb(i,reinterpret_cast<float*>(&aabb[i]));
       }
+    
     cudaMalloc(reinterpret_cast<void**>(&d_aabb
         ),nb_obj_volumic*sizeof(OptixAabb));
     cudaMemcpy(
@@ -700,7 +708,7 @@ void OptixRender::buildVolumeAccel(){
 
    vasBuffer.alloc(compactedSize);
    OPTIX_CHECK(optixAccelCompact(optixContext,
-                                 /*stream:*//*0,
+                                 0,//stream,
                                  vas,
                                  vasBuffer.d_pointer(),
                                  vasBuffer.sizeInBytes,
@@ -712,32 +720,31 @@ void OptixRender::buildVolumeAccel(){
    // ==================================================================
    compactedSizeBuffer.free();
    free(input);
-}*/
-/*
+}
+
 void OptixRender::updateSBT(){
     CUDA_SYNC_CHECK();
-    for(size_t i = 0; i < modele->getNumObject(); ++i){
+    for(size_t i = 0; i < modele->getNumVolume(); ++i){
         HitgroupRecord& rec = hitgroupRecords[i];
-        OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupPGs[modele->getObject(i)->getRenderType()],&rec));
-        modele->getSbt(i,&rec.sbt);
+        OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupPGs[VOLUME_RENDERING],&rec));
+        modele->getVolumeSbt(i,&rec.sbt);
 
     }
     //Create HitGroup for mesh object*
     const int numMeshObjects = (int)modele->getNumMesh();
     for (int i=0; i<numMeshObjects;i++) {
-      HitgroupRecord& rec =  hitgroupRecords[i + modele->getNumObject()];
+      HitgroupRecord& rec =  hitgroupRecords[i + modele->getNumVolume()];
       OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupPGs[MESH_RENDERING],&rec));
-      rec.sbt.meshData = modele->getMesh(i)->getSBT(launchParams.multi_gpu.numGPU);
+      modele->getMeshSbt(i,&rec.sbt);
     }
 }
 
 void OptixRender::updateAccelerationStructure(){
     CUDA_SYNC_CHECK();
-    cudaSetDevice(launchParams.multi_gpu.numGPU);
 
     if(this->isVolumeDataModified){
         vas = {0};
-        if(this->modele->getNumObject() > 0) updateVAS();
+        if(this->modele->getNumVolume() > 0) updateVAS();
     }
     if(this->isMeshDataModified) {
         mas = {0};
@@ -783,8 +790,8 @@ void OptixRender::updateMAS(){
 
     // create local variables, because we need a *pointer* to the
     // device pointers
-    d_vertices[i] = modele->getMesh(i)->getVertexDevicePointer(launchParams.multi_gpu.numGPU);
-    d_indices[i]  = modele->getMesh(i)->getIndexDevicePointer(launchParams.multi_gpu.numGPU);
+    d_vertices[i] = modele->getMesh(i)->getVertexDevicePointer();
+    d_indices[i]  = modele->getMesh(i)->getIndexDevicePointer();
     input[i].triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
     input[i].triangleArray.vertexStrideInBytes = sizeof(vec3f);
     input[i].triangleArray.numVertices = (int)modele->getMesh(i)->getNumVertices();
@@ -847,7 +854,7 @@ void OptixRender::updateMAS(){
         masOutputBuffer.resize(blasBufferSizes.outputSizeInBytes);
 
    OPTIX_CHECK(optixAccelBuild(optixContext,
-                               /* stream *//*0,
+                               /* stream */0,
                                &accelOptions,
                                input.data(),
                                (int)input.size(),
@@ -872,7 +879,7 @@ void OptixRender::updateMAS(){
    masBuffer.free();
    masBuffer.alloc(compactedSize);
    OPTIX_CHECK(optixAccelCompact(optixContext,
-                                 /*stream:*//*0,
+                                 /*stream:*/0,
                                  mas,
                                  masBuffer.d_pointer(),
                                  masBuffer.sizeInBytes,
@@ -886,7 +893,7 @@ void OptixRender::updateMAS(){
 }
 //Mets à jours les données concernants les aabb structures
 void OptixRender::updateVAS(){
-    const int nb_obj_volumic = modele->getNumObject();
+    const int nb_obj_volumic = modele->getNumVolume();
     OptixBuildInput *input = (OptixBuildInput*)malloc(sizeof(OptixBuildInput) *nb_obj_volumic );
 
     //Create accel for volume
@@ -968,7 +975,7 @@ void OptixRender::updateVAS(){
    vasOutputBuffer.alloc(blasBufferSizes.outputSizeInBytes);
 
    OPTIX_CHECK(optixAccelBuild(optixContext,
-                               /* stream *//*0,
+                               /* stream */0,
                                &accelOptions,
                                input,
                                nb_obj_volumic,
@@ -993,7 +1000,7 @@ void OptixRender::updateVAS(){
     vasBuffer.free();
    vasBuffer.alloc(compactedSize);
    OPTIX_CHECK(optixAccelCompact(optixContext,
-                                 /*stream:*//*0,
+                                 /*stream:*/0,
                                  vas,
                                  vasBuffer.d_pointer(),
                                  vasBuffer.sizeInBytes,
@@ -1024,7 +1031,7 @@ void OptixRender::updateIAS(){
     instances[0].visibilityMask = 0xFF;
     instances[0].flags = OPTIX_INSTANCE_FLAG_NONE;
     instances[0].traversableHandle = vas;
-    sbtOffset +=  modele->getNumObject();
+    sbtOffset +=  modele->getNumVolume();
 
     //instance 1 for mesh
 
@@ -1120,56 +1127,16 @@ void OptixRender::updateIAS(){
 
 }
 
+
 void OptixRender::render(){
     CUDA_SYNC_CHECK();
-    cudaSetDevice(launchParams.multi_gpu.numGPU);
     if (launchParams.frame.size.x == 0) return;
-
+     CUDA_SYNC_CHECK();
     updateAccelerationStructure();
-    launchParamsBuffer.upload(&launchParams,1);
-    CUDA_SYNC_CHECK();
-
-    if( launchParams.frame.deplacementMode == 1){
-        OPTIX_CHECK(optixLaunch(/*! pipeline we're launching launch: */
-                              /*   pipeline,stream,
-                                 //! parameters and SBT 
-                                 launchParamsBuffer.d_pointer(),
-                                 launchParamsBuffer.sizeInBytes,
-                                 &sbt,
-                                 //! dimensions of the launch: 
-                                 launchParams.frame.size.x/launchParams.frame.moveReduction*(launchParams.frame.stereo == HOLO_STEREO ? 3 : 1),
-                                 launchParams.frame.size.y/launchParams.frame.moveReduction,
-                                 1
-                                 ));
-    }
-    else{
-        OPTIX_CHECK(optixLaunch(/*! pipeline we're launching launch: */
-                               /*  pipeline,stream,
-                                 //! parameters and SBT 
-                                 launchParamsBuffer.d_pointer(),
-                                 launchParamsBuffer.sizeInBytes,
-                                 &sbt,
-                                 //! dimensions of the launch: 
-                                 launchParams.frame.size.x*(launchParams.frame.stereo == HOLO_STEREO ? 3 : 1),
-                                 launchParams.frame.size.y,
-                                 1
-                                 ));
-    }
-    CUDA_SYNC_CHECK();
-}
-*/
-
-void OptixRender::render(const int widthOffset, const int heightOffset, int nbXRayon, int nbYRayon){
-    CUDA_SYNC_CHECK();
-    if (launchParams.frame.size.x == 0) return;
-
-    cudaSetDevice(launchParams.multi_gpu.numGPU);
-    launchParams.multi_gpu.widthOffset = widthOffset;
-    launchParams.multi_gpu.heightOffset = heightOffset;
-    updateAccelerationStructure();
+     CUDA_SYNC_CHECK();
     launchParamsBuffer.upload(&launchParams,1,stream);
 
-    
+     CUDA_SYNC_CHECK();
     OPTIX_CHECK(optixLaunch(/*! pipeline we're launching launch: */
                                 pipeline,stream,
                                 /*! parameters and SBT */
@@ -1177,8 +1144,8 @@ void OptixRender::render(const int widthOffset, const int heightOffset, int nbXR
                                 launchParamsBuffer.sizeInBytes,
                                 &sbt,
                                 /*! dimensions of the launch: */
-                                nbXRayon,
-                                nbYRayon,
+                                launchParams.frame.size.x,
+                                launchParams.frame.size.y,
                                 1
                                 ));
 
@@ -1207,14 +1174,12 @@ void OptixRender::downloadPixels(uint32_t h_pixels[]){
 }
 
 
-void OptixRender::setCamera(const Cam &cam, const int index){
+void OptixRender::setCamera(const Camera &cam){
     launchParams.camera.position  = cam.pos;
     launchParams.camera.direction = cam.at;
-    launchParams.camera.offset = cam.offset;
     launchParams.camera.up = cam.up;
 
-    const float cosFovy = cam.vfov;
-    launchParams.camera.cosFovY = cam.vfov;
+    const float cosFovy = 0.66f;
 
     const float aspect = launchParams.frame.size.x / float(launchParams.frame.size.y);
     launchParams.camera.horizontal
@@ -1223,13 +1188,6 @@ void OptixRender::setCamera(const Cam &cam, const int index){
     launchParams.camera.vertical
       = cosFovy * normalize(cross(launchParams.camera.horizontal,
                                   launchParams.camera.direction));
-
-    launchParams.camera.znear = cam.znear;
-    launchParams.camera.zfar  = cam.zfar;
-    launchParams.camera.zfar = 120.f;
-    launchParams.camera.znear = 0.f;
-    launchParams.camera.hfov = cam.hfov;
-    launchParams.camera.vfov = cam.vfov;
 }
 /*! set camera to render with */
 void OptixRender::updateSBTBuffer(){

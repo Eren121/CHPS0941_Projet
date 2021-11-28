@@ -50,7 +50,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${gdt_dir}/cmake/")
 include(${gdt_dir}/cmake/configure_build_type.cmake)
 include(${gdt_dir}/cmake/configure_optix.cmake)
 
+include_directories(${OptiX_INCLUDE})
+#cuda_compile_and_embed(embedded_ptx_code shader/mesh.cu shader/raygen.cu shader/devicePrograms.cu)
+
+cuda_compile_and_embed(embedded_ptx_code ./shader/devicePrograms.cu)
+
 add_executable(VSProject
+  ${embedded_ptx_code}
   ./src/main.cpp
   ./src/screenDisplay.cpp
   ./src/screenDisplay.h 
@@ -62,6 +68,8 @@ add_executable(VSProject
   ./src/trianglemesh.cpp
   ./src/optixRender.cpp
   ./src/optixRender.h
+  ./src/volume.h
+  ./src/volume.cpp
 )
 
 include_directories(${OptiX_INCLUDE})
@@ -82,5 +90,8 @@ target_link_libraries(VSProject
   ${CUDA_LIBRARIES}
   ${CUDA_CUDA_LIBRARY}
   )
+
+
+
 
 

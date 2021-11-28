@@ -5,6 +5,7 @@ TriangleMesh::TriangleMesh()
 {
     index.resize(0);
     vertex.resize(0);
+    color = vec3f(1.f,0.f,0.f);
 }
 
 TriangleMesh::~TriangleMesh(){
@@ -34,13 +35,13 @@ void TriangleMesh::addPlane(vec3f &center, vec3f &size, vec3f &color){
 
 void TriangleMesh::addUnitCube(){
     int firstVertexID = (int)vertex.size();
-    vertex.push_back(vec3f(0.f, 0.f, 0.f));
-    vertex.push_back(vec3f(1.f, 0.f, 0.f));
-    vertex.push_back(vec3f(0.f, 1.f, 0.f));
-    vertex.push_back(vec3f(1.f, 1.f, 0.f));
-    vertex.push_back(vec3f(0.f, 0.f, 1.f));
-    vertex.push_back(vec3f(1.f, 0.f, 1.f));
-    vertex.push_back(vec3f(0.f, 1.f, 1.f));
+    vertex.push_back(vec3f(-1.f, -1.f, -1.f));
+    vertex.push_back(vec3f(1.f, -1.f, -1.f));
+    vertex.push_back(vec3f(-1.f, 1.f, -1.f));
+    vertex.push_back(vec3f(1.f, 1.f, -1.f));
+    vertex.push_back(vec3f(-1.f, -1.f, 1.f));
+    vertex.push_back(vec3f(1.f, -1.f, 1.f));
+    vertex.push_back(vec3f(-1.f, 1.f, 1.f));
     vertex.push_back(vec3f(1.f, 1.f, 1.f));
 
 
@@ -58,14 +59,13 @@ void TriangleMesh::addUnitCube(){
 }
 
 
-TriangleMeshSBT TriangleMesh::getSBT(){
-    TriangleMeshSBT sbt;
-    sbt.size = size;
-    sbt.center = center;
-    sbt.kd = color;
-    sbt.vertex = reinterpret_cast<vec3f*>(this->vertexBuffer.d_ptr);
-    sbt.indices = reinterpret_cast<vec3i*>(this->indexBuffer.d_ptr);
-    return sbt;
+void TriangleMesh::getSBT(sbtData *sbt){
+    TriangleMeshSBT sbtTriangle;
+    sbtTriangle.kd = color;
+    sbtTriangle.vertex = reinterpret_cast<vec3f*>(this->vertexBuffer.d_ptr);
+    sbtTriangle.indices = reinterpret_cast<vec3i*>(this->indexBuffer.d_ptr);
+
+    sbt->meshData = sbtTriangle;
 }
 
 size_t TriangleMesh::getNumVertices() const{
@@ -135,4 +135,9 @@ vec3f TriangleMesh::getSize(){
         max = maxVec(max,vertex[i]);
     }
     return max - min;
+}
+
+
+void TriangleMesh::setColor(vec3f &c){
+    color = c;
 }

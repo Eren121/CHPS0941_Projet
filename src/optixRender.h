@@ -11,6 +11,7 @@
 #include <cuda_gl_interop.h>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #include "Scene.hpp"
 
@@ -126,8 +127,6 @@ public:
     void notifySbtChanges();
     void notifyAabbObjectChanges();
 
-    void render(const int widthOffset, const int heightOffset, int nbXRayon, int nbYRayon);
-
 private :
 
     /* SBT record for a raygen program */
@@ -218,7 +217,7 @@ private :
     bool isMeshDataModified = false;
     bool isSBTDataModified = false;
 
-    std::string ptx_volume_path = "./devicePrograms.ptx";;
+    std::string ptx_volume_path = "./volume.ptx";;
     std::string ptx_mesh_path = "./mesh.ptx";
     std::string ptx_raygen_path = "./raygen.ptx";
 

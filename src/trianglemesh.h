@@ -19,7 +19,6 @@ public:
     TriangleMesh();
     ~TriangleMesh();
 
-    
     /**
         \brief Creer un maillage d'un plan ( soit 2 triangles)
     */
@@ -49,7 +48,7 @@ public:
     /**
         \brief Retourne la structure GPU qui definis un maillage triangulaire
     */
-    TriangleMeshSBT getSBT();
+    void getSBT(sbtData *sbt);
 
     /**
         \brief Ajoutes un sommets
@@ -79,6 +78,8 @@ public:
         \brief Retourne la taille de l'objet
     */
     vec3f getSize();
+
+    void setColor(vec3f &c);
 private :
     vec3f color; //color de base
     vec3f size; //taille de la bbox
