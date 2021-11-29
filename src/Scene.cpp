@@ -45,7 +45,6 @@ TriangleMesh* Scene::getMesh(const int id){
     return nullptr;
 }
 
-
 void Scene::getAabb(const int i, float* aabb){
     if( i < m_volumes.size() )
         m_volumes[i]->getAabb(aabb);

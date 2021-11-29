@@ -35,9 +35,30 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
 
     glfwSetKeyCallback(window, key_callback);
 
+
+    //Initialisation of Imgui
+   
+   // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.DisplaySize.x = width;io.DisplaySize.y = height;
+    io.Fonts->Build();
+    std::cout << "size : " << io.DisplaySize.x << " " << io.DisplaySize.y << std::endl;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    const char* glsl_version = "#version 130";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+
     pixels.resize(width*height);
-
-
     //Creation des objets de la scene
     createSceneEntities();  
 
@@ -73,6 +94,7 @@ void ScreenDisplay::createSceneEntities(){
 }
 
 void ScreenDisplay::run(){
+    bool show_demo_window = false;
     while (!glfwWindowShouldClose(window))
     {
         float ratio;
@@ -80,11 +102,33 @@ void ScreenDisplay::run(){
         glfwGetFramebufferSize(window, &width, &height);
         ratio = width / (float) height;
        
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        {
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+            
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+           
+            ImGui::End();
+        }
+        
         update();
         render();
         drawScene();
-        // Keep running
         
+
+       
+        // Rendering
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        //keep running
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -95,11 +139,15 @@ void ScreenDisplay::update(){
     optixRender->setCamera(m_camera);
 }
 void ScreenDisplay::render(){
+    std::cout << "ScreenDisplay::render()" << std::endl;
     optixRender->render();
+    std::cout << "ScreenDisplay::render()::render ok" << std::endl;
     optixRender->downloadPixels(pixels.data());
+    std::cout << "ScreenDisplay::render()::download ok" << std::endl;
 }
 
 void ScreenDisplay::drawScene(){
+    std::cout << "ScreenDisplay::drawScene()" << std::endl; 
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0.f,0.f,0.f,1.f);
     if (fbTexture == 0)

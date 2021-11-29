@@ -233,7 +233,7 @@ void OptixRender::createVolumeModule(){
     strStream << inFile.rdbuf(); //read the file
     std::string str = strStream.str(); //str holds the content of the file
     inFile.close();
-
+    std::cout << "str:  " << str << std::endl;
     OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
                                          &moduleCompileOptions,
                                          &pipelineCompileOptions,
@@ -290,8 +290,7 @@ void OptixRender::createRaygenPrograms(){
     OptixProgramGroupOptions pgOptions = {};
     OptixProgramGroupDesc pgDesc    = {};
     pgDesc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
- //   pgDesc.raygen.module            = raygen_module;
- pgDesc.raygen.module            = raygen_module;
+    pgDesc.raygen.module            = raygen_module;
     pgDesc.raygen.entryFunctionName = "__raygen__renderFrame";
 
     // OptixProgramGroup raypg;
@@ -779,8 +778,8 @@ void OptixRender::updateMAS(){
   // upload the model to the device: the builder
   std::vector<OptixBuildInput> input;
   input.resize(nb_obj_mesh);
-  std::vector<CUdeviceptr> d_vertices ;//= modele.getMesh(0)->getVertexDevicePointer();
-  std::vector<CUdeviceptr> d_indices;// =  modele.getMesh(0)->getIndexDevicePointer();
+  std::vector<CUdeviceptr> d_vertices ;
+  std::vector<CUdeviceptr> d_indices;
   d_vertices.resize(nb_obj_mesh);
   d_indices.resize(nb_obj_mesh);
   uint32_t triangleInputFlags[1] = { 0 };
@@ -1129,6 +1128,7 @@ void OptixRender::updateIAS(){
 
 
 void OptixRender::render(){
+    std::cout << "OptixRender::render()" << std::endl;
     CUDA_SYNC_CHECK();
     if (launchParams.frame.size.x == 0) return;
      CUDA_SYNC_CHECK();
@@ -1136,6 +1136,7 @@ void OptixRender::render(){
      CUDA_SYNC_CHECK();
     launchParamsBuffer.upload(&launchParams,1,stream);
 
+std::cout << "OptixRender::render()::upload ok" << std::endl;
      CUDA_SYNC_CHECK();
     OPTIX_CHECK(optixLaunch(/*! pipeline we're launching launch: */
                                 pipeline,stream,
@@ -1149,6 +1150,7 @@ void OptixRender::render(){
                                 1
                                 ));
 
+    std::cout << "OptixRender::render()::optixLaunch ok " << std::endl;
     CUDA_SYNC_CHECK();
 }
 void OptixRender::resize(const vec2i &newSize)
