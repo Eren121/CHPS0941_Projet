@@ -233,7 +233,7 @@ void OptixRender::createVolumeModule(){
     strStream << inFile.rdbuf(); //read the file
     std::string str = strStream.str(); //str holds the content of the file
     inFile.close();
-
+    std::cout << "str:  " << str << std::endl;
     OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
                                          &moduleCompileOptions,
                                          &pipelineCompileOptions,
@@ -290,8 +290,7 @@ void OptixRender::createRaygenPrograms(){
     OptixProgramGroupOptions pgOptions = {};
     OptixProgramGroupDesc pgDesc    = {};
     pgDesc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
- //   pgDesc.raygen.module            = raygen_module;
- pgDesc.raygen.module            = raygen_module;
+    pgDesc.raygen.module            = raygen_module;
     pgDesc.raygen.entryFunctionName = "__raygen__renderFrame";
 
     // OptixProgramGroup raypg;

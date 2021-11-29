@@ -124,22 +124,21 @@
      }
   }
 
-  extern "C" __global__ void __closesthit__radiance(){
+  extern "C" __global__ void __closesthit__volume_radiance(){
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
 
-      intersection_time time;
-      time.tmin.uitmin = optixGetAttribute_0();
-      time.tmax.uitmax = optixGetAttribute_1();
+      vec3f& prd = *(vec3f*)getPRD<vec3f>();
+      prd = data.color;
   }
 
 
-  extern "C" __global__ void __anyhit__radiance()
+  extern "C" __global__ void __anyhit__volume_radiance()
   {
   }
 
 
-  extern "C" __global__ void __intersection__voxel() {
+  extern "C" __global__ void __intersection__volume() {
       const VolumetricCube& sbtData
           = *(const VolumetricCube*)optixGetSbtDataPointer();
       vec3f ro = optixGetWorldRayOrigin();

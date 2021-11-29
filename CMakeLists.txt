@@ -1,9 +1,8 @@
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.9)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
-
 project(VSProject LANGUAGES CXX VERSION 0.0.0)
 
 if (NOT WIN32)
@@ -53,7 +52,8 @@ include(${gdt_dir}/cmake/configure_optix.cmake)
 include_directories(${OptiX_INCLUDE})
 #cuda_compile_and_embed(embedded_ptx_code shader/mesh.cu shader/raygen.cu shader/devicePrograms.cu)
 
-cuda_compile_and_embed(embedded_ptx_code ./shader/devicePrograms.cu)
+#cuda_compile_and_embed(embedded_ptx_code ./shader/devicePrograms.cu)
+
 
 add_executable(VSProject
   ${embedded_ptx_code}
@@ -85,13 +85,55 @@ target_link_libraries(VSProject
   OpenGL::GL
   glfw
   ${OPENGL_LIBRARY}
-  OpenGL::GL
   ${optix_LIBRARY}
   ${CUDA_LIBRARIES}
   ${CUDA_CUDA_LIBRARY}
   )
 
 
+#compile shader
+enable_language(CUDA)
+
+include(CheckLanguage)
+check_language(CUDA)
+
+# CUDA PACKAGE
+find_package(CUDA REQUIRED)
+set(CUDA_SEPARABLE_COMPILATION ON)
+set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+set(CUDA_HOST_COMPILER clang++)
+
+if(NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
 
 
+# COMPILE CU FILES
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./)
+add_library(mesh OBJECT shader/mesh.cu)
+set_property(TARGET mesh PROPERTY CUDA_ARCHITECTURES 50-virtual)
+set_target_properties(mesh PROPERTIES
+CUDA_PTX_COMPILATION ON)
+
+add_library(raygen OBJECT shader/raygen.cu)
+set_property(TARGET raygen PROPERTY CUDA_ARCHITECTURES 50-virtual)
+set_target_properties(raygen PROPERTIES
+CUDA_PTX_COMPILATION ON)
+
+add_library(volume OBJECT shader/volume.cu)
+set_property(TARGET volume PROPERTY CUDA_ARCHITECTURES 50-virtual)
+set_target_properties(volume PROPERTIES CUDA_PTX_COMPILATION ON)
+
+add_custom_command(TARGET VSProject POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+                       ${CMAKE_BINARY_DIR}/volume.dir/$<CONFIG>/volume.ptx $<TARGET_FILE_DIR:VSProject>/volume.ptx)
+
+add_custom_command(TARGET VSProject POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+                       ${CMAKE_BINARY_DIR}/raygen.dir/$<CONFIG>/raygen.ptx $<TARGET_FILE_DIR:VSProject>/raygen.ptx)
+
+add_custom_command(TARGET VSProject POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+                       ${CMAKE_BINARY_DIR}/mesh.dir/$<CONFIG>/mesh.ptx $<TARGET_FILE_DIR:VSProject>/mesh.ptx)
 

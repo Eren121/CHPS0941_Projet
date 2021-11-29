@@ -18,7 +18,7 @@
 #define stepSize_current optixLaunchParams.frame.sampler
 
 #include <optix_device.h>
-#include "LaunchParams.h"
+#include "../src/LaunchParams.h"
 
   /*! launch parameters in constant memory, filled in by optix upon
       optixLaunch (this gets filled in from the buffer we pass to
