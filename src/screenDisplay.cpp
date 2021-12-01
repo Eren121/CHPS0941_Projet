@@ -1,5 +1,7 @@
 #include "screenDisplay.h"
 
+
+
 void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -9,6 +11,41 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
+        std::cout << "mouse right button pressed" << std::endl;
+        ScreenDisplay::translation = true;        
+    }
+    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
+        std::cout << "mouse right button released" << std::endl;
+        ScreenDisplay::translation = false; 
+    }
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
+        std::cout << "mouse left button pressed" << std::endl;
+        ScreenDisplay::rotation = true;        
+    }
+    else if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE){
+        std::cout << "mouse left button released" << std::endl;
+        ScreenDisplay::rotation = false; 
+    }
+}
+
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if( ScreenDisplay::rotation){
+
+    }
+    if(ScreenDisplay::translation){
+        vec2f t = ScreenDisplay::oldCursorPosition - vec2f(xpos,ypos);
+        ScreenDisplay::m_camera.pos.x += t.x*0.005;
+        ScreenDisplay::m_camera.pos.y += t.y*0.005; 
+        ScreenDisplay::m_camera.at.x  += t.x*0.005;
+        ScreenDisplay::m_camera.at.y  += t.y*0.005; 
+    }
+    ScreenDisplay::oldCursorPosition = vec2f(xpos,ypos);
 }
 
 ScreenDisplay::ScreenDisplay(const int width, const int height, const std::string title) : m_screenSize(width,height),m_windowTitle(title){
@@ -21,7 +58,7 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     }
 
     glfwSetErrorCallback(error_callback);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     
     window = glfwCreateWindow(m_screenSize.x, m_screenSize.y, m_windowTitle.c_str(), NULL, NULL);
@@ -33,7 +70,8 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     }
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
-
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
 
     //Initialisation of Imgui
    // Setup Dear ImGui context
@@ -42,7 +80,6 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.DisplaySize.x = width;io.DisplaySize.y = height;
     io.Fonts->Build();
-    std::cout << "size : " << io.DisplaySize.x << " " << io.DisplaySize.y << std::endl;
    
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

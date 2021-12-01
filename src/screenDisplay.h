@@ -1,3 +1,6 @@
+#ifndef __SCREENDISPLAY_H__
+#define __SCREENDISPLAY_H__
+
 #include <GL/glew.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -13,9 +16,6 @@
 #include "camera.h"
 #include "Scene.hpp"
 #include "optixRender.h"
-
-
-
 
 
 class ScreenDisplay {
@@ -44,9 +44,17 @@ class ScreenDisplay {
     vec2i m_screenSize;
     GLFWwindow* window;
     std::string m_windowTitle = "VSProject" ;
-    Camera m_camera;
     std::vector<uint32_t> pixels;
     GLuint                fbTexture {0};
     Scene scene;
     OptixRender *optixRender;
+
+public : 
+
+static bool translation;
+static bool rotation;
+static vec2f oldCursorPosition;
+static Camera m_camera;
 };
+
+#endif

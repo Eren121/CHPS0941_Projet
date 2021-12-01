@@ -235,7 +235,6 @@ void OptixRender::createVolumeModule(){
     strStream << inFile.rdbuf(); //read the file
     std::string str = strStream.str(); //str holds the content of the file
     inFile.close();
-    std::cout << "str:  " << str << std::endl;
     OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
                                          &moduleCompileOptions,
                                          &pipelineCompileOptions,
@@ -1176,7 +1175,7 @@ void OptixRender::downloadPixels(uint32_t h_pixels[]){
 
 void OptixRender::setCamera(const Camera &cam){
     launchParams.camera.position  = cam.pos;
-    launchParams.camera.direction = cam.at;
+    launchParams.camera.direction = normalize(cam.at - cam.pos);
     launchParams.camera.up = cam.up;
 
     const float cosFovy = 0.66f;

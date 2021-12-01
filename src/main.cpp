@@ -5,6 +5,11 @@
 #include <optix_function_table_definition.h>
 #include "screenDisplay.h"
 
+bool ScreenDisplay::translation;
+bool ScreenDisplay::rotation;
+vec2f ScreenDisplay::oldCursorPosition;
+Camera ScreenDisplay::m_camera;
+
 int main(int argc, char** argv){
 
     std::cout << "hello !!" << std::endl;
