@@ -28,6 +28,7 @@ class ScreenDisplay {
 
         void run();
         
+        void updateInterface();
         void update();
         void render();
         void drawScene();

@@ -19,6 +19,10 @@ void Scene::rmMesh(const int id){
     m_meshs.erase(m_meshs.begin() + id);
 }
 
+void Scene::clear(){
+    m_meshs.clear();
+    m_volumes.clear();
+}
 
 size_t Scene::getNumVolume() const{
     return m_volumes.size();

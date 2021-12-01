@@ -63,6 +63,8 @@ void OptixRender::initialize(Scene *modele){
    std::cout << "#osc: context, module, pipeline, etc, all set up ..." << std::endl;
 }
 
+//void OptixRender::getLaunchParams(){return &LaunchParams;}
+
 void OptixRender::buildIAS(Scene* modele, OptixTraversableHandle volume_traversable, OptixTraversableHandle mesh_traversable){
     std::vector<OptixInstance> instances;
     instances.resize(2);
@@ -1128,7 +1130,6 @@ void OptixRender::updateIAS(){
 
 
 void OptixRender::render(){
-    std::cout << "OptixRender::render()" << std::endl;
     CUDA_SYNC_CHECK();
     if (launchParams.frame.size.x == 0) return;
      CUDA_SYNC_CHECK();
@@ -1136,7 +1137,6 @@ void OptixRender::render(){
      CUDA_SYNC_CHECK();
     launchParamsBuffer.upload(&launchParams,1,stream);
 
-std::cout << "OptixRender::render()::upload ok" << std::endl;
      CUDA_SYNC_CHECK();
     OPTIX_CHECK(optixLaunch(/*! pipeline we're launching launch: */
                                 pipeline,stream,
@@ -1149,8 +1149,6 @@ std::cout << "OptixRender::render()::upload ok" << std::endl;
                                 launchParams.frame.size.y,
                                 1
                                 ));
-
-    std::cout << "OptixRender::render()::optixLaunch ok " << std::endl;
     CUDA_SYNC_CHECK();
 }
 void OptixRender::resize(const vec2i &newSize)

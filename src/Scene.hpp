@@ -15,6 +15,7 @@ class Scene {
     /*Suppression d'objet dans la scène*/
     void rmMesh(const int id);
     void rmVolume(const int id);
+    void clear();
 
     size_t getNumVolume() const;
     size_t getNumMesh() const;
