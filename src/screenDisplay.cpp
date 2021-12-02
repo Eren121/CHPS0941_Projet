@@ -35,17 +35,45 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+    const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
+    const vec2f t = ScreenDisplay::oldCursorPosition - vec2f(xpos,ypos);
+    
     if( ScreenDisplay::rotation){
-
+        ScreenDisplay::coordonneeSpherique = ScreenDisplay::coordonneeSpherique + t;
+        const vec2f CS2Rad = ScreenDisplay::coordonneeSpherique * 3.14f/180.f;
+        //Rotation du vector up de t*0.005f
+        Matrix3x3 rotation;
+        Matrix3x3 rotationx = rotation.rotationX(CS2Rad.y); 
+        Matrix3x3 rotationy = rotation.rotationY(CS2Rad.x);
+        
+        rotation = rotationy * rotationx;
+        //rotation = rotation.rotationX(-ScreenDisplay::coordonneeSpherique.y / 3.14f * 180.f) * rotation.rotationY(-ScreenDisplay::coordonneeSpherique.x / 3.14f * 180.f);
+        ScreenDisplay::m_camera.up = normalize(rotation * vec3f(0.f,1.f,0.f));
+        //Set de la position
+        const float r = norme(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+        ScreenDisplay::m_camera.pos.x = r * sin(CS2Rad.x) * cos(CS2Rad.y);
+        ScreenDisplay::m_camera.pos.y = r * sin(CS2Rad.x) * sin(CS2Rad.y);
+        ScreenDisplay::m_camera.pos.z = r * cos(CS2Rad.x);
     }
     if(ScreenDisplay::translation){
-        vec2f t = ScreenDisplay::oldCursorPosition - vec2f(xpos,ypos);
-        ScreenDisplay::m_camera.pos.x += t.x*0.005;
-        ScreenDisplay::m_camera.pos.y += t.y*0.005; 
-        ScreenDisplay::m_camera.at.x  += t.x*0.005;
-        ScreenDisplay::m_camera.at.y  += t.y*0.005; 
+        const vec3f dt = vec3f(t.x,t.y, 1.f);
+        //Right/Left move 
+        ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + rightVector*dt*0.005f;
+        ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at + rightVector*dt*0.005f;
+
+        //Up/down move
+        ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos -ScreenDisplay::m_camera.up*dt*0.005f;
+        ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at  -ScreenDisplay::m_camera.up*dt*0.005f;
     }
     ScreenDisplay::oldCursorPosition = vec2f(xpos,ypos);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+    ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + atVector*yoffset*0.5f;
+    ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at  + atVector*yoffset*0.5f;
 }
 
 ScreenDisplay::ScreenDisplay(const int width, const int height, const std::string title) : m_screenSize(width,height),m_windowTitle(title){
@@ -72,6 +100,7 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     //Initialisation of Imgui
    // Setup Dear ImGui context
@@ -139,7 +168,7 @@ void ScreenDisplay::run(){
         // Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+        
         //keep running
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -176,6 +205,8 @@ void ScreenDisplay::updateInterface(){
     ImGui::SliderFloat("Number of sample", &parameters->frame.sampler, 1.f, 9999.f);
     ImGui::SliderFloat("Min intensity", &parameters->frame.minIntensity, 0.f, 1.f);
     ImGui::SliderFloat("Max Intensity", &parameters->frame.maxIntensity, 1.f, 0.f);
+
+    ImGui::End();
 }
 void ScreenDisplay::update(){
     optixRender->setCamera(m_camera);

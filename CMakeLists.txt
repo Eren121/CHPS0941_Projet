@@ -67,6 +67,8 @@ add_executable(VSProject
   ./src/optixRender.h
   ./src/volume.h
   ./src/volume.cpp
+  ./src/mmatrix.h
+  ./src/mmatrix.cpp
 )
 
 include_directories(${OptiX_INCLUDE})

@@ -16,7 +16,7 @@
 #include "camera.h"
 #include "Scene.hpp"
 #include "optixRender.h"
-
+#include "mmatrix.h"
 
 class ScreenDisplay {
     public :
@@ -55,6 +55,7 @@ static bool translation;
 static bool rotation;
 static vec2f oldCursorPosition;
 static Camera m_camera;
+static vec2f coordonneeSpherique;
 };
 
 #endif

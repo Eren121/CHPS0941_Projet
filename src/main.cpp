@@ -9,6 +9,8 @@ bool ScreenDisplay::translation;
 bool ScreenDisplay::rotation;
 vec2f ScreenDisplay::oldCursorPosition;
 Camera ScreenDisplay::m_camera;
+vec2f ScreenDisplay::coordonneeSpherique;
+
 
 int main(int argc, char** argv){
 
