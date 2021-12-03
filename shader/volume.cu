@@ -78,8 +78,8 @@
   }
   
   __device__ void mip(){
-      const VolumetricCube& sbtData
-       = *(const VolumetricCube*)optixGetSbtDataPointer();
+      const VolumetricCube& data
+       = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
      const int   primID = optixGetPrimitiveIndex();
      intersection_time time;
      time.tmin.uitmin = optixGetAttribute_0();
@@ -88,7 +88,7 @@
      vec3f ro = optixGetWorldRayOrigin();
      vec3f rd = optixGetWorldRayDirection();
      vec3f& prd = *(vec3f*)getPRD<vec3f>();
-     vec3f sizeP = vec3f(sbtData.sizePixel.x, sbtData.sizePixel.y, sbtData.sizePixel.z);
+     vec3f sizeP = vec3f(data.sizePixel.x, data.sizePixel.y, data.sizePixel.z);
 
      //Ray
      vec3f point_in = ro + time.tmin.ftmin * rd ;
@@ -105,8 +105,8 @@
      //MIP
      prd = vec3f(0.0f);
      while(current_ray_length > 0.0f){
-        vec3f pos_tex = (current_pos_tex - sbtData.center + sbtData.size / 2.0f) / sbtData.size;
-        current_intensity = tex3D<float>(sbtData.tex,pos_tex.x,pos_tex.y,pos_tex.z);
+        vec3f pos_tex = (current_pos_tex - data.center + data.size / 2.0f) / data.size;
+        current_intensity = tex3D<float>(data.tex,pos_tex.x,pos_tex.y,pos_tex.z);
 
 
         if( current_intensity >= optixLaunchParams.frame.minIntensity && current_intensity <= optixLaunchParams.frame.maxIntensity){
@@ -128,8 +128,7 @@
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
 
-      vec3f& prd = *(vec3f*)getPRD<vec3f>();
-      prd = data.color;
+      mip();
   }
 
 
