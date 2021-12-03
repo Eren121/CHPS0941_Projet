@@ -35,36 +35,48 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
-    const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
+    
     const vec2f t = ScreenDisplay::oldCursorPosition - vec2f(xpos,ypos);
     
     if( ScreenDisplay::rotation){
         ScreenDisplay::coordonneeSpherique = ScreenDisplay::coordonneeSpherique + t;
-        const vec2f CS2Rad = ScreenDisplay::coordonneeSpherique * 3.14f/180.f;
-        //Rotation du vector up de t*0.005f
-        Matrix3x3 rotation;
-        Matrix3x3 rotationx = rotation.rotationX(CS2Rad.y); 
-        Matrix3x3 rotationy = rotation.rotationY(CS2Rad.x);
-        
-        rotation = rotationy * rotationx;
-        //rotation = rotation.rotationX(-ScreenDisplay::coordonneeSpherique.y / 3.14f * 180.f) * rotation.rotationY(-ScreenDisplay::coordonneeSpherique.x / 3.14f * 180.f);
-        ScreenDisplay::m_camera.up = normalize(rotation * vec3f(0.f,1.f,0.f));
+        /*const vec2f CS2Rad = ScreenDisplay::coordonneeSpherique * 3.14f/180.f;
+        vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+
         //Set de la position
         const float r = norme(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+
         ScreenDisplay::m_camera.pos.x = r * sin(CS2Rad.x) * cos(CS2Rad.y);
         ScreenDisplay::m_camera.pos.y = r * sin(CS2Rad.x) * sin(CS2Rad.y);
         ScreenDisplay::m_camera.pos.z = r * cos(CS2Rad.x);
+
+        atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+        const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
+
+        //Rotation du vector up de t*0.005f
+        Matrix3x3 rotation;
+        Matrix3x3 rotationx = rotation.rotationX(-CS2Rad.x); 
+        Matrix3x3 rotationy = rotation.rotationZ(-CS2Rad.y);
+        
+        rotation = rotationy * rotationx;
+        //rotation = rotation.rotationX(-ScreenDisplay::coordonneeSpherique.y / 3.14f * 180.f) * rotation.rotationY(-ScreenDisplay::coordonneeSpherique.x / 3.14f * 180.f);
+        ScreenDisplay::m_camera.up = normalize(rotation * vec3f(0.f,1.f,0.f));*/
+        
+       
     }
     if(ScreenDisplay::translation){
-        const vec3f dt = vec3f(t.x,t.y, 1.f);
+        const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+        const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
+        const vec3f dt = vec3f(t.x * 0.005f,t.y * 0.005f, 0.f);
         //Right/Left move 
-        ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + rightVector*dt*0.005f;
-        ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at + rightVector*dt*0.005f;
+       // ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + rightVector*dt*0.005f;
+       // ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at + rightVector*dt*0.005f;
 
         //Up/down move
-        ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos -ScreenDisplay::m_camera.up*dt*0.005f;
-        ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at  -ScreenDisplay::m_camera.up*dt*0.005f;
+       // ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos -ScreenDisplay::m_camera.up*dt*0.005f;
+        //ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at  -ScreenDisplay::m_camera.up*dt*0.005f;
+
+        ScreenDisplay::translateCamera = ScreenDisplay::translateCamera + rightVector*dt - ScreenDisplay::m_camera.up*dt;
     }
     ScreenDisplay::oldCursorPosition = vec2f(xpos,ypos);
 }
@@ -73,7 +85,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
     ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + atVector*yoffset*0.5f;
-    ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at  + atVector*yoffset*0.5f;
 }
 
 ScreenDisplay::ScreenDisplay(const int width, const int height, const std::string title) : m_screenSize(width,height),m_windowTitle(title){
@@ -209,7 +220,34 @@ void ScreenDisplay::updateInterface(){
     ImGui::End();
 }
 void ScreenDisplay::update(){
-    optixRender->setCamera(m_camera);
+    Camera cam;
+    const vec2f CS2Rad = ScreenDisplay::coordonneeSpherique * -3.14f/180.f;
+    vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+
+    //Set de la position spherique
+    const float r = norme(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+
+    cam.pos.x = r * sin(CS2Rad.x) * cos(CS2Rad.y);
+    cam.pos.y = r * sin(CS2Rad.x) * sin(CS2Rad.y);
+    cam.pos.z = r * cos(CS2Rad.x);
+
+    atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+    const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
+
+    //Rotation du vector up de t*0.005f
+    Matrix3x3 rotation;
+    Matrix3x3 rotationx = rotation.rotationX(CS2Rad.x); 
+    Matrix3x3 rotationy = rotation.rotationZ(CS2Rad.y);
+    
+    rotation = rotationy;
+    //rotation = rotation.rotationX(-ScreenDisplay::coordonneeSpherique.y / 3.14f * 180.f) * rotation.rotationY(-ScreenDisplay::coordonneeSpherique.x / 3.14f * 180.f);
+    cam.up = normalize(rotation * vec3f(0.f,1.f,0.f));
+        
+    //translate cam
+    cam.pos = cam.pos + ScreenDisplay::translateCamera;
+    cam.at  = cam.at  + ScreenDisplay::translateCamera;
+
+    optixRender->setCamera(cam);
 }
 void ScreenDisplay::render(){
     optixRender->render();

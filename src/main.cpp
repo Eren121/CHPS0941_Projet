@@ -7,6 +7,7 @@
 
 bool ScreenDisplay::translation;
 bool ScreenDisplay::rotation;
+vec3f ScreenDisplay::translateCamera;
 vec2f ScreenDisplay::oldCursorPosition;
 Camera ScreenDisplay::m_camera;
 vec2f ScreenDisplay::coordonneeSpherique;

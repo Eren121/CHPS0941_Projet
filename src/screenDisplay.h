@@ -53,6 +53,7 @@ public :
 
 static bool translation;
 static bool rotation;
+static vec3f translateCamera;
 static vec2f oldCursorPosition;
 static Camera m_camera;
 static vec2f coordonneeSpherique;
