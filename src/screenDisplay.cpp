@@ -15,6 +15,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+    
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
         std::cout << "mouse right button pressed" << std::endl;
         ScreenDisplay::translation = true;        
@@ -35,48 +36,17 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    
-    const vec2f t = ScreenDisplay::oldCursorPosition - vec2f(xpos,ypos);
-    
-    if( ScreenDisplay::rotation){
-        ScreenDisplay::coordonneeSpherique = ScreenDisplay::coordonneeSpherique + t;
-        /*const vec2f CS2Rad = ScreenDisplay::coordonneeSpherique * 3.14f/180.f;
-        vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
-
-        //Set de la position
-        const float r = norme(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
-
-        ScreenDisplay::m_camera.pos.x = r * sin(CS2Rad.x) * cos(CS2Rad.y);
-        ScreenDisplay::m_camera.pos.y = r * sin(CS2Rad.x) * sin(CS2Rad.y);
-        ScreenDisplay::m_camera.pos.z = r * cos(CS2Rad.x);
-
-        atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
-        const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
-
-        //Rotation du vector up de t*0.005f
-        Matrix3x3 rotation;
-        Matrix3x3 rotationx = rotation.rotationX(-CS2Rad.x); 
-        Matrix3x3 rotationy = rotation.rotationZ(-CS2Rad.y);
-        
-        rotation = rotationy * rotationx;
-        //rotation = rotation.rotationX(-ScreenDisplay::coordonneeSpherique.y / 3.14f * 180.f) * rotation.rotationY(-ScreenDisplay::coordonneeSpherique.x / 3.14f * 180.f);
-        ScreenDisplay::m_camera.up = normalize(rotation * vec3f(0.f,1.f,0.f));*/
-        
-       
-    }
-    if(ScreenDisplay::translation){
-        const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
-        const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
-        const vec3f dt = vec3f(t.x * 0.005f,t.y * 0.005f, 0.f);
-        //Right/Left move 
-       // ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + rightVector*dt*0.005f;
-       // ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at + rightVector*dt*0.005f;
-
-        //Up/down move
-       // ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos -ScreenDisplay::m_camera.up*dt*0.005f;
-        //ScreenDisplay::m_camera.at  = ScreenDisplay::m_camera.at  -ScreenDisplay::m_camera.up*dt*0.005f;
-
-        ScreenDisplay::translateCamera = ScreenDisplay::translateCamera + rightVector*dt - ScreenDisplay::m_camera.up*dt;
+    if( !(ScreenDisplay::ihmpos.x < xpos && ScreenDisplay::ihmpos.x + ScreenDisplay::ihmsize.x > xpos && ScreenDisplay::ihmpos.y < ypos && ScreenDisplay::ihmpos.y + ScreenDisplay::ihmsize.y > ypos)){
+        const vec2f t = ScreenDisplay::oldCursorPosition - vec2f(xpos,ypos);
+        if( ScreenDisplay::rotation){
+            ScreenDisplay::coordonneeSpherique = ScreenDisplay::coordonneeSpherique + t;
+        }
+        if(ScreenDisplay::translation){
+            const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+            const vec3f rightVector = normalize(cross(atVector,ScreenDisplay::m_camera.up));
+            const vec3f dt = vec3f(t.x * 0.005f,t.y * 0.005f, 0.f);
+            ScreenDisplay::translateCamera = ScreenDisplay::translateCamera + rightVector*dt - ScreenDisplay::m_camera.up*dt;
+        }
     }
     ScreenDisplay::oldCursorPosition = vec2f(xpos,ypos);
 }
@@ -158,6 +128,7 @@ void ScreenDisplay::createSceneEntities(){
     t2->setColor(vec3f(0.f,1.f,0.f));
     scene.addMesh(t2);
     Volume *v = new Volume();
+    v->loadVolume("../../data/cafard.dat");
     scene.addVolume(v);
     
 
@@ -217,7 +188,14 @@ void ScreenDisplay::updateInterface(){
     ImGui::SliderFloat("Min intensity", &parameters->frame.minIntensity, 0.f, 1.f);
     ImGui::SliderFloat("Max Intensity", &parameters->frame.maxIntensity, 1.f, 0.f);
 
+    ImVec2 pos = ImGui::GetWindowPos();
+    ImVec2 size = ImGui::GetWindowSize();
+    ScreenDisplay::ihmpos = vec2f(pos.x,pos.y);
+    ScreenDisplay::ihmsize = vec2f(size.x,size.y);
     ImGui::End();
+
+    
+    
 }
 void ScreenDisplay::update(){
     Camera cam;

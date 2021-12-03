@@ -11,6 +11,8 @@ vec3f ScreenDisplay::translateCamera;
 vec2f ScreenDisplay::oldCursorPosition;
 Camera ScreenDisplay::m_camera;
 vec2f ScreenDisplay::coordonneeSpherique;
+vec2f ScreenDisplay::ihmpos; 
+vec2f ScreenDisplay::ihmsize;
 
 
 int main(int argc, char** argv){

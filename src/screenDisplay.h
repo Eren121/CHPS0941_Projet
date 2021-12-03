@@ -57,6 +57,8 @@ static vec3f translateCamera;
 static vec2f oldCursorPosition;
 static Camera m_camera;
 static vec2f coordonneeSpherique;
+static vec2f ihmpos;
+static vec2f ihmsize;
 };
 
 #endif

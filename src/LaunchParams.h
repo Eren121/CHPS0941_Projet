@@ -39,7 +39,7 @@ struct LaunchParams
         uint32_t* colorBuffer; //resultat du rendu
         vec2i     size; // taille de l'image
         unsigned char renderType = MIP; 
-        float sampler = 0.001f;
+        float sampler = 0.0001f;
         float minIntensity = 0.0f, maxIntensity = 1.0f;
     } frame;
 

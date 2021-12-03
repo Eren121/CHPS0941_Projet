@@ -16,7 +16,35 @@ Volume::Volume(std::string path){
 
 
 void Volume::loadVolume(const std::string &path){
-    //TODO 
+     FILE* fp = fopen(path.c_str(), "rb");
+    unsigned short vuSize[3];
+    fread((void*)vuSize, 3, sizeof(unsigned short), fp);
+    pixelSize = vec3i(int(vuSize[0]),int(vuSize[1]),int(vuSize[2]));
+    unsigned int uCount = int(vuSize[0]) * int(vuSize[1]) * int(vuSize[2]);
+    unsigned short *data = new unsigned short[uCount];
+    fread((void*)data, uCount, sizeof(unsigned short), fp);
+    fclose(fp);
+    for(unsigned int i = 0; i < uCount; ++i){
+        if( data[i] > maxIntensity)
+            maxIntensity = data[i];
+        if( data[i] < minIntensity)
+            minIntensity = data[i];
+    }
+    pData = data;
+    type = SHORT;
+
+    createTexture();
+
+    /*Set Dimension*/
+    vec3f size = worldSize;
+    size = vec3f(size.x * (float)pixelSize.x,size.y * (float)pixelSize.y,size.z * (float)pixelSize.z );
+    float max = size.x;
+    if( max < size.y )
+        max = size.y;
+    if( max < size.z)
+        max = size.z;
+    worldSize = size / max * worldSize;
+
 }
 
 
