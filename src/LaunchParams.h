@@ -72,7 +72,11 @@ struct TriangleMeshSBT {
     vec3f kd;
     vec3f *vertex;
     vec3i *indices;
- };
+    vec2f *texCoord;
+    cudaTextureObject_t tex = 0;
+    unsigned char hasTexture = 0;
+ };  
+    
 
 /*
     La structure sbtData permet de regrouper l'ensemble des informations pour afficher

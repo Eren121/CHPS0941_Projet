@@ -15,16 +15,10 @@
 // ======================================================================== //
 
 #define DEVICE 1
-#define stepSize_current optixLaunchParams.frame.sampler
 
 #include <optix_device.h>
 
 #include "../src/LaunchParams.h"
-
-  /*! launch parameters in constant memory, filled in by optix upon
-      optixLaunch (this gets filled in from the buffer we pass to
-      optixLaunch) */
-  extern "C" __constant__ LaunchParams optixLaunchParams;
 
   __device__ void swap(float &a, float &b) {
       float tmp = a;
@@ -56,100 +50,47 @@
     return reinterpret_cast<T*>( unpackPointer( u0, u1 ) );
   }
   
+  __device__ vec3i pi2Index(vec3f pi, vec3f size, vec3f center, vec3i sizePixel) {
+      const vec3f findex = ((pi - center + size / 2) / size);
+      vec3i index = vec3i((int)(findex.x) * sizePixel.x, (int)(findex.y) * sizePixel.y, (int)(findex.z) * sizePixel.z);
+      return index;
+  }
 
   extern "C" __global__ void __closesthit__mesh_radiance(){
-        const TriangleMeshSBT& sbt_data =  (*reinterpret_cast<const sbtData*>(optixGetSbtDataPointer())).meshData;
+      const sbtData &sbt = (*reinterpret_cast<const sbtData*>(optixGetSbtDataPointer()));
+        const TriangleMeshSBT& sbt_data =  sbt.meshData;
+
         vec3f& prd = *(vec3f*)getPRD<vec3f>();
-        prd = sbt_data.kd;
+        //Gather informations
+        const vec3f ro = optixGetWorldRayOrigin();
+        const vec3f rd = optixGetWorldRayDirection();
+        const vec3f sizeP = vec3f(1.0f);
+        const float fov = acos(0.6f);
+        const vec3f Li = vec3f(1.f);
+        //Ray
+        const int   primID = optixGetPrimitiveIndex();
+        const vec3i index  = sbt_data.indices[primID];
+        const vec3f L      =  normalize((sbt_data.vertex[index.x],sbt_data.vertex[index.y],sbt_data.vertex[index.z])/3.0f - ro);
+        const vec3f &A     = sbt_data.vertex[index.x];
+        const vec3f &B     = sbt_data.vertex[index.y];
+        const vec3f &C     = sbt_data.vertex[index.z];
+        const vec3f N     = normalize(cross(B-A,C-A));
+        float4 color = make_float4(1.0f,1.0f,1.0f,1.0f);
+        if( sbt_data.hasTexture != 0){
+            const float u = optixGetTriangleBarycentrics().x;
+            const float v = optixGetTriangleBarycentrics().y;
+            const vec2f tc
+                    = (1.f-u-v)* sbt_data.texCoord[index.x]
+                    +         u * sbt_data.texCoord[index.y]
+                    +         v * sbt_data.texCoord[index.z];
+            
+            color = tex2D<float4>(sbt_data.tex,tc.x,tc.y);
+
+      }
+      prd = Li * vec3f(color.x,color.y,color.z)  *  fabs(dot(L,N));
   }
 
   extern "C" __global__ void __anyhit__mesh_radiance(){
-      
-  }
-
-
-
-  //------------------------------------------------------------------------------
-  // miss program that gets called for any ray that did not have a
-  // valid intersection
-  //
-  // as with the anyhit/closest hit programs, in this example we only
-  // need to have _some_ dummy function to set up a valid SBT
-  // ------------------------------------------------------------------------------
-  
-  extern "C" __global__ void __miss__radiance()
-  {
-    vec3f &prd = *(vec3f*)getPRD<vec3f>();
-    prd = vec3f(0.f,0.f,0.f);
-    // set to constant white as background color
 
   }
-
-  extern "C" __global__ void __raygen__renderFrame(){
-     // compute a test pattern based on pixel ID
-     // width [0 , 7680]
-     // height [0,4320]
-     const int ix = optixGetLaunchIndex().x;
-     const int iy = optixGetLaunchIndex().y;
-
-     const auto &camera = optixLaunchParams.camera;
-
-     // our per-ray data for this example. what we initialize it to
-     // won't matter, since this value will be overwritten by either
-
-     // the miss or hit program, anyway
-     vec3f pixelColorPRD = vec3f(0.f);
-
-     // the values we store the PRD pointer in:
-     uint32_t u0, u1;
-     packPointer( &pixelColorPRD, u0, u1 );
-
-     // normalized screen plane position, in [0,1]^2
-
-     const vec2f size = vec2f(optixLaunchParams.frame.size.x, optixLaunchParams.frame.size.y);
-     const vec2f origin_uv = (vec2f((float)(ix+0.5f),(float)(iy+0.5f)) /
-                                        vec2f((float)optixLaunchParams.frame.size.x,(float)optixLaunchParams.frame.size.y));
-
-     pixelColorPRD = vec3f(0.f);
-     const vec3f rayDir = normalize(camera.direction
-                              + (origin_uv.x - 0.5f)  * camera.horizontal
-                              + (origin_uv.y - 0.5f) * camera.vertical);
-
-     const vec3f ro = camera.position;
-     const vec3f rd = rayDir;
-
-     const float3 cp = make_float3(ro.x ,ro.y,ro.z);
-     const float3 rdf3 = make_float3(rd.x,rd.y,rd.z);
-
-
-     optixTrace(optixLaunchParams.traversable,
-                    cp,
-                    rdf3,
-                    0.f,    // tmin
-                    100.f,  // tmax
-                    0.0f,   // rayTime
-                    OptixVisibilityMask( 255 ),
-                    OPTIX_RAY_FLAG_NONE,
-                    SURFACE_RAY_TYPE,             // SBT offset
-                    RAY_TYPE_COUNT,               // SBT stride
-                    SURFACE_RAY_TYPE,             // missSBTIndex
-                    u0, u1 );
-     const unsigned char r = int(255.99f*pixelColorPRD.x);
-     const unsigned char g = int(255.99f*pixelColorPRD.y);
-     const unsigned char b = int(255.99f*pixelColorPRD.z);
-
-    // convert to 32-bit rgba value (we explicitly set alpha to 0xff
-    // to make stb_image_write happy ...
-    const uint32_t rgba = 0xff000000
-       | (r<<0) | (g<<8) | (b<<16);
-
-    const uint32_t fbIndex = (ix)+iy*(optixLaunchParams.frame.size.x);
-
-    uint32_t &pixel = optixLaunchParams.frame.colorBuffer[fbIndex];
-    pixel = (pixel & 0xFFFFFF00) | ((uint32_t)r <<  0);
-    pixel = (pixel & 0xFFFF00FF) | ((uint32_t)g <<  8);
-    pixel = (pixel & 0xFF00FFFF) | ((uint32_t)b << 16);
-    pixel = (pixel & 0x00FFFFFF) | ((uint32_t)255 << 24);
-     
- }
 

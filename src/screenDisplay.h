@@ -17,6 +17,7 @@
 #include "Scene.hpp"
 #include "optixRender.h"
 #include "mmatrix.h"
+#include "meshloader.h"
 
 class ScreenDisplay {
     public :

@@ -120,16 +120,15 @@ ScreenDisplay::~ScreenDisplay(){
 void ScreenDisplay::createSceneEntities(){
     //Creation de la scene a afficher
     //Ajout d'un cube unitaire dans la scene
-    TriangleMesh *t= new TriangleMesh();
-    TriangleMesh *t2= new TriangleMesh();
-    t->addUnitCube();
-    t2->addUnitCube();
-    t2->translate(vec3f(3.f,0.f,0.f));
-    t2->setColor(vec3f(0.f,1.f,0.f));
-    scene.addMesh(t2);
-    Volume *v = new Volume();
-    v->loadVolume("../../data/cafard.dat");
-    scene.addVolume(v);
+    MeshLoader loader;
+    loader.LoadMesh("../../data/statue/statue.obj");
+    std::vector<TriangleMesh*> meshs;
+    meshs = loader.toTriangleMeshs();
+    for(size_t i = 0; i < meshs.size(); ++i)
+        scene.addMesh(meshs[i]);
+   // Volume *v = new Volume();
+   // v->loadVolume("../../data/cafard.dat");
+    //scene.addVolume(v);
     
 
 }

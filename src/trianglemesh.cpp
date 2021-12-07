@@ -5,6 +5,7 @@ TriangleMesh::TriangleMesh()
 {
     index.resize(0);
     vertex.resize(0);
+    texCoordBuffer.resize(0);
     color = vec3f(1.f,0.f,0.f);
 }
 
@@ -12,9 +13,11 @@ TriangleMesh::~TriangleMesh(){
 
     vertexBuffer.free();
     indexBuffer.free();
-
+    texCoordBuffer.free();
+    
     vertex.clear();
     index.clear();
+    texCoord.clear();
 }
 
 void TriangleMesh::addPlane(vec3f &center, vec3f &size, vec3f &color){
@@ -60,14 +63,26 @@ void TriangleMesh::addUnitCube(){
 
 
 void TriangleMesh::getSBT(sbtData *sbt){
-    TriangleMeshSBT sbtTriangle;
+    TriangleMeshSBT& sbtTriangle = sbt->meshData;
     sbtTriangle.kd = color;
     sbtTriangle.vertex = reinterpret_cast<vec3f*>(this->vertexBuffer.d_ptr);
     sbtTriangle.indices = reinterpret_cast<vec3i*>(this->indexBuffer.d_ptr);
-
-    sbt->meshData = sbtTriangle;
+    sbtTriangle.texCoord = reinterpret_cast<vec2f*>(this->getTextureCoordinateBuffer());
+    sbtTriangle.tex = this->tex;
+    sbtTriangle.hasTexture = (this->tex == 0 ? 0 : 1);
 }
-
+void TriangleMesh::setTexture(cudaTextureObject_t texture){
+    tex = texture;
+}
+CUdeviceptr TriangleMesh::getTextureCoordinateBuffer() {
+    if( texCoord.size() != 0){
+        texCoordBuffer.free();
+        texCoordBuffer.alloc_and_upload(texCoord);
+        return texCoordBuffer.d_pointer();
+    }else{
+        return 0;
+    }
+}
 size_t TriangleMesh::getNumVertices() const{
     return vertex.size();
 }
@@ -101,7 +116,13 @@ void TriangleMesh::addIndices(const std::vector<vec3i> indices){
         this->index.push_back(indices[i]);
     }
 }
-
+void TriangleMesh::addTextureCoordinate(const std::vector<vec2f> texCoords){
+    for(size_t i =0; i < texCoords.size() ; ++i){
+        this->texCoord.push_back(texCoords[i]);
+    }
+    texCoordBuffer.free();
+    texCoordBuffer.alloc_and_upload(texCoord);
+}
 void TriangleMesh::translate(const vec3f &t){
     for(size_t i = 0; i < vertex.size(); ++i){
            vertex[i] = vertex[i] + t;

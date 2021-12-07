@@ -2,6 +2,7 @@
 #define TRIANGLEMESH_H
 
 #include <vector>
+#include <iostream>
 #include "vec.h"
 #include "CUDABuffer.h"
 #include "LaunchParams.h"
@@ -44,7 +45,12 @@ public:
         \brief Retourne un pointeur pour le gpu qui pointe vers le tableau des indices
     */
     CUdeviceptr getIndexDevicePointer();
+     /**
+        \brief Retourne un pointeur pour le gpu qui pointe vers le tableau des textures
+    */
+    CUdeviceptr getTextureCoordinateBuffer();
 
+    void setTexture(cudaTextureObject_t texture);
     /**
         \brief Retourne la structure GPU qui definis un maillage triangulaire
     */
@@ -58,7 +64,7 @@ public:
         \brief Ajoutes un indice de sommet
     */
     void addIndices(const std::vector<vec3i> indices);
-
+    void addTextureCoordinate(const std::vector<vec2f> texCoords);
     /**
         \brief Realise la translation d'un maillage triangulaire
     */
@@ -85,11 +91,15 @@ private :
     vec3f size; //taille de la bbox
     vec3f center; // centre de la bbox
 
-    std::vector<vec3i> index; //liste des indices sur le host ---> represente les faces
-    std::vector<vec3f> vertex; //listes des sommets sur le host
+    std::vector<vec3i> index; //liste des indices ---> represente les faces
+    std::vector<vec3f> vertex; //listes des sommets
+    std::vector<vec2f> texCoord; //Coordonnees textures
 
-    CUDABuffer vertexBuffer; //listes des sommets par GPU
-    CUDABuffer indexBuffer; //listes des incides par GPU
+    CUDABuffer vertexBuffer; //listes des sommets
+    CUDABuffer indexBuffer; 
+    CUDABuffer texCoordBuffer; // listes des coordonnees textures par GPU
+    cudaTextureObject_t tex = 0; //objet representant une texture pour Optix par GPU
+    
 };
 
 #endif // TRIANGLEMESH_H
