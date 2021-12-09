@@ -18,7 +18,7 @@
 
 #include <optix_device.h>
 
-#include "../src/LaunchParams.h"
+#include "../common/LaunchParams.h"
 
   __device__ void swap(float &a, float &b) {
       float tmp = a;
