@@ -73,9 +73,9 @@ Voici une petite liste de la version OptiX et la version minimal du driver requi
 - Lancer `1_meshVisualization` pour exécuter le programme. Il n'y a pas de paramètre à passer.
  Par défaut, le maillage statue.obj et le volume cafard.dat seront pris en charge.
  Exécution de 1_meshVisualization : 
-![Mesh visualisation](/images/sample1.png)
+![Mesh visualisation](/images/sample1.PNG)
 Exécution de 2_volumeVisualization : 
-![Mesh visualisation](/images/sample2.png)
+![Mesh visualisation](/images/sample2.PNG)
 Exécution de VSProject : 
-![Mesh visualisation](/images/sample3.png)
+![Mesh visualisation](/images/sample3.PNG)
 
