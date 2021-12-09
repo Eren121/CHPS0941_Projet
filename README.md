@@ -18,7 +18,7 @@ cd build
 cmake -DCMAKE_INSTALL_PREFIX="/votre_path_vers_les_assimp/build/install" ..
 cmake --build . --config Release
 ```
-Puis il faudra placer le contenu du répertoire install dans le dossier libs quand vous aurez cloner le dépôt du projet OptiX.
+Puis il faudra placer le contenu du répertoire install dans le dossier libs/assimp quand vous aurez cloner le dépôt du projet OptiX.
 # Compiler le dépôt
 
 1. Cloner le dépôt
@@ -32,6 +32,12 @@ cd build
 
 3. Lancer la commande
 ` cmake ..` //Pour l'instant il y a des warning concernant le policy, ils seront bientôt corrigés
+L'erreur retourné pour l'instant est : 
+```  CUDA_ARCHITECTURES is empty for target "2_volumeVisualization".
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Generating done
+CMake Generate step failed.  Build files cannot be regenerated correctly.```
 
 4. Compiler les projets
 `cmake --build . --config Release `
