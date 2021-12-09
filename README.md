@@ -10,9 +10,13 @@
 # Dépendances
 
 - OptiX : API de Ray tracing
+> A blockquote would look great below the second list item.
 - CUDA : 
+> A blockquote would look great below the second list item.
 - ImGUI : Interfaçage
+> A blockquote would look great below the second list item.
 - GLFW : création du contexte graphique sous OpenGL
+> A blockquote would look great below the second list item.
 - GLEW : extension OpenGL
 - STB : I/O image file format
 - ASSIMP : I/O 3D file format
