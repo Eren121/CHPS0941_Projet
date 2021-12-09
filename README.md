@@ -15,7 +15,7 @@ Pour ce faire, dans un répertoire séparé de celui du projet, il faut exécute
 git clone https://github.com/assimp/assimp.git
 mkdir build
 cd build
-cmake -DASSIMP_LIBRARY_OUTPUT_DIRECTORY="/votre_path_vers_les_assimp/build/install" ..
+cmake -DCMAKE_INSTALL_PREFIX="/votre_path_vers_les_assimp/build/install" ..
 cmake --build . --config Release
 ```
 Puis il faudra placer le contenu du répertoire install dans le dossier libs quand vous aurez cloner le dépôt du projet OptiX.
