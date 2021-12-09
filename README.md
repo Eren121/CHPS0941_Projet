@@ -54,7 +54,7 @@ Voici une petite liste de la version OptiX et la version minimal du driver requi
 | -----------        | -----------      |
 | OptiX 7.4.0        | NVIDIA R465.84   |
 | OptiX 7.3.0        | NVIDIA R456.71   |
-| OptiX 7.1.0        | NVIDIA R450 R450 |
+| OptiX 7.1.0        | NVIDIA R450      |
 | OptiX 7.0.0        | NVIDIA R435.80   |
 
 - ImGUI : Interfaçage
