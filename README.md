@@ -49,13 +49,13 @@ ou
 La version proposée est la 7.4.0, cependant elle nécessite la version NVIDIA R495.89 ou plus récentes des drivers graphiques.
 D'autres version d'OptiX sont disponnibles sur ce lien : https://developer.nvidia.com/designworks/optix/downloads/legacy .
 Voici une petite liste de la version OptiX et la version minimal du driver requis : 
-<ol>
-  <li>OptiX 7.4.0</li><li>NVIDIA R495.89</li>
-  <li>OptiX 7.3.0</li><li>NVIDIA R465.84</li>
-  <li>OptiX 7.2.0</li><li>NVIDIA R456.71</li>
-  <li>OptiX 7.1.0</li><li>NVIDIA R450</li>
-  <li>OptiX 7.0.0</li><li>NVIDIA R435.80 </li>
-</ol>
+
+| Optix version      | Driver version   |
+| -----------        | -----------      |
+| OptiX 7.4.0        | NVIDIA R465.84   |
+| OptiX 7.3.0        | NVIDIA R456.71   |
+| OptiX 7.1.0        | NVIDIA R450 R450 |
+| OptiX 7.0.0        | NVIDIA R435.80   |
 
 - ImGUI : Interfaçage
 > Le lien du git : https://github.com/ocornut/imgui
