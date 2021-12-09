@@ -6,7 +6,8 @@
 Vérifier la version du compilateur, des pilotes graphiques (voir la partie dependencies pour les pré-requis).
 
 Pour information, le code a été testé avec une Visual Studio 16 2019, OptiX 7.4, OptiX 7.3 et cuda 11.4. 
-##Compiler assimp
+
+## Compiler assimp
 
 Avant de lancer la compilation du projet, il faut compiler Assimp en amont.
 Pour ce faire, dans un répertoire séparé de celui du projet, il faut exécuter les commandes suivantes : 
