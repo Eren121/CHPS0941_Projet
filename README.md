@@ -17,3 +17,8 @@
 - STB : I/O image file format
 - ASSIMP : I/O 3D file format
 
+# Runtime
+
+- Lancer `1_meshVisualization` pour ... Par défaut, le maillage nom.obj sera prise en charge
+![Tux, the Linux mascot](/images/sample1.png)
+
