@@ -1,0 +1,9 @@
+libdir=G:/programmation/VSProject/assimp/build/install/lib
+includedir=G:/programmation/VSProject/assimp/build/install/include
+
+Name: Assimp
+Description: Import various well-known 3D model formats in an uniform manner.
+Version: 5.1.0
+Libs: -L${libdir} -lassimp
+Libs.private:  
+Cflags: -I${includedir}
