@@ -17,19 +17,15 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
-        std::cout << "mouse right button pressed" << std::endl;
         ScreenDisplay::translation = true;        
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
-        std::cout << "mouse right button released" << std::endl;
         ScreenDisplay::translation = false; 
     }
     if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
-        std::cout << "mouse left button pressed" << std::endl;
         ScreenDisplay::rotation = true;        
     }
     else if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE){
-        std::cout << "mouse left button released" << std::endl;
         ScreenDisplay::rotation = false; 
     }
 }
@@ -182,7 +178,7 @@ void ScreenDisplay::updateInterface(){
         optixRender->notifySbtChanges();
     }
     LaunchParams *parameters = optixRender->getLaunchParams();
-    ImGui::SliderFloat("Number of sample", &parameters->frame.sampler, 1.f, 0.f);
+    ImGui::SliderFloat("Number of samples", &parameters->frame.sampler, 1, 1000);
     ImGui::SliderFloat("Min intensity", &parameters->frame.minIntensity, 0.f, 1.f);
     ImGui::SliderFloat("Max Intensity", &parameters->frame.maxIntensity, 1.f, 0.f);
 

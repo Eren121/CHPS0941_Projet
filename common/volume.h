@@ -12,6 +12,7 @@
 #include <texture_fetch_functions.h>
 #include <optix_types.h>
 #include "LaunchParams.h"
+#include <iostream>
 
 
 

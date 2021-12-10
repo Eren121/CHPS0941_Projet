@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #define DEVICE 1
-#define stepSize_current optixLaunchParams.frame.sampler
+#define nbSamples optixLaunchParams.frame.sampler
 
 #include <optix_device.h>
 
@@ -95,6 +95,7 @@
      vec3f point_out = ro + time.tmax.ftmax * rd;
      vec3f ray_world = point_out - point_in;
 
+     const float stepSize_current = norme(point_out - point_in) / nbSamples;
      vec3f step_vector_tex = normalize(ray_world) * stepSize_current;
      float current_ray_length = norme(ray_world);
 
@@ -127,7 +128,6 @@
   extern "C" __global__ void __closesthit__volume_radiance(){
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
-
       mip();
   }
 

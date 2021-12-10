@@ -39,7 +39,7 @@ struct LaunchParams
         uint32_t* colorBuffer; //resultat du rendu
         vec3f lightPosition;
         vec2i     size; // taille de l'image
-        float sampler = 0.001f;
+        float sampler = 500.f;
         float ki = -1;
         float ks = -1; 
         float minIntensity = 0.0f;
