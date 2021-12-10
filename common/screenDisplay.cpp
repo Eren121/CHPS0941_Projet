@@ -1,7 +1,11 @@
 #include "screenDisplay.h"
 
 
-
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+    ScreenDisplay::updated = true;
+    ScreenDisplay::m_screenSize = vec2i(width,height);
+}
 void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -53,7 +57,11 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + atVector*yoffset*0.5f;
 }
 
-ScreenDisplay::ScreenDisplay(const int width, const int height, const std::string title) : m_screenSize(width,height),m_windowTitle(title){
+
+
+ScreenDisplay::ScreenDisplay(const int width, const int height, const std::string title) : m_windowTitle(title){
+    ScreenDisplay::updated = false;
+    ScreenDisplay::m_screenSize = vec2i(width,height);
 
     if (!glfwInit())
     {
@@ -78,6 +86,7 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
 
     //Initialisation of Imgui
    // Setup Dear ImGui context
@@ -220,6 +229,11 @@ void ScreenDisplay::update(){
     cam.at  = cam.at  + ScreenDisplay::translateCamera;
 
     optixRender->setCamera(cam);
+
+    if(updated){
+        resize(m_screenSize.x, m_screenSize.y);
+        updated =false;
+    }
 }
 void ScreenDisplay::render(){
     optixRender->render();
@@ -276,6 +290,8 @@ void ScreenDisplay::drawScene(){
 void ScreenDisplay::resize(const int width, const int height){
     m_screenSize.x = width;
     m_screenSize.y = height;
+    optixRender->resize(m_screenSize);
+    pixels.resize(width * height);
 }
 
 vec2i ScreenDisplay::getSize() const {

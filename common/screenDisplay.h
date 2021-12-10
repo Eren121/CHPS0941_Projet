@@ -41,8 +41,6 @@ class ScreenDisplay {
         int getHeight() const;
 
     private :
-    
-    vec2i m_screenSize;
     GLFWwindow* window;
     std::string m_windowTitle = "VSProject" ;
     std::vector<uint32_t> pixels;
@@ -60,6 +58,9 @@ static Camera m_camera;
 static vec2f coordonneeSpherique;
 static vec2f ihmpos;
 static vec2f ihmsize;
+static vec2i m_screenSize;
+static bool updated;
 };
+
 
 #endif
