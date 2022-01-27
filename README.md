@@ -17,6 +17,7 @@ mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX="/votre_path_vers_les_assimp/build/install" ..
 cmake --build . --config Release
+cmake --install .
 ```
 Puis il faudra placer le contenu du répertoire install dans le dossier libs/assimp quand vous aurez cloner le dépôt du projet OptiX.
 # Compiler le dépôt
