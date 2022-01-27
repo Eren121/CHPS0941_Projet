@@ -41,8 +41,6 @@ This warning is for project developers.  Use -Wno-dev to suppress it.
 CMake Generate step failed.  Build files cannot be regenerated correctly.```
 ```
 4. Compiler les projets
-`cmake --build . --config Release `
-ou
 `cmake --build . --config Debug `
 
 
