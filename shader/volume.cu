@@ -20,6 +20,7 @@
 #include <optix_device.h>
 
 #include "../common/LaunchParams.h"
+#include "../render/Shader.h"
 
   /*! launch parameters in constant memory, filled in by optix upon
       optixLaunch (this gets filled in from the buffer we pass to
@@ -77,6 +78,53 @@
         return res;
   }
   
+  template<typename IntensityProjection>
+  __device__ void intensityProjection(IntensityProjection& ip)
+  {
+      const VolumetricCube& data
+      = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
+    const int   primID = optixGetPrimitiveIndex();
+    intersection_time time;
+    time.tmin.uitmin = optixGetAttribute_0();
+    time.tmax.uitmax = optixGetAttribute_1();
+    //Gather information
+    vec3f ro = optixGetWorldRayOrigin();
+    vec3f rd = optixGetWorldRayDirection();
+    vec3f& prd = *(vec3f*)getPRD<vec3f>();
+    vec3f sizeP = vec3f(data.sizePixel.x, data.sizePixel.y, data.sizePixel.z);
+
+    //Ray
+    vec3f point_in = ro + time.tmin.ftmin * rd ;
+    vec3f point_out = ro + time.tmax.ftmax * rd;
+    vec3f ray_world = point_out - point_in;
+
+    const float stepSize_current = norme(point_out - point_in) / nbSamples;
+    vec3f step_vector_tex = normalize(ray_world) * stepSize_current;
+    float current_ray_length = norme(ray_world);
+
+    vec3f current_pos_tex = point_in;
+    float current_max = 0.0f;
+    float current_intensity = 0.0f;
+
+    //Generic Intensity Projection (IP)
+
+    while(current_ray_length > 0.0f){
+      vec3f pos_tex = (current_pos_tex - data.center + data.size / 2.0f) / data.size;
+      current_intensity = tex3D<float>(data.tex,pos_tex.x,pos_tex.y,pos_tex.z);
+
+      if( current_intensity >= optixLaunchParams.frame.minIntensity && current_intensity <= optixLaunchParams.frame.maxIntensity){
+        if(!ip.nextVoxelHit(current_intensity)) {
+          break;
+        }
+      }
+      
+      current_pos_tex = current_pos_tex + step_vector_tex;
+      current_ray_length -= stepSize_current;
+    }
+    
+    prd = vec3f(ip.getFinalIntensity());
+  }
+
   __device__ void mip(){
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
@@ -128,7 +176,11 @@
   extern "C" __global__ void __closesthit__volume_radiance(){
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
+
       mip();
+      
+      //ip_type::MIP ip;
+      //intensityProjection(ip);
   }
 
 
