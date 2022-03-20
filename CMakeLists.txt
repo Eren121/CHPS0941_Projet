@@ -78,6 +78,10 @@ include_directories("${IMGUI_DIR}/backends/")
 # ------------------------------------------------------------------
 # build Samples
 # ------------------------------------------------------------------
+add_library(CHPS0941_Additions
+  ${PROJECT_SOURCE_DIR}/render/Gui.cpp
+  ${PROJECT_SOURCE_DIR}/render/RenderingType.cpp)
+
 add_subdirectory(samples)
 
 add_executable(VSProject
@@ -104,6 +108,7 @@ add_definitions(
 )
 
 target_link_libraries(VSProject
+  CHPS0941_Additions
   OpenGL::GL
   imgui
   glfw

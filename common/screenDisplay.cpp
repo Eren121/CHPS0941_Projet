@@ -207,6 +207,9 @@ void ScreenDisplay::updateInterface(){
     ImVec2 size = ImGui::GetWindowSize();
     ScreenDisplay::ihmpos = vec2f(pos.x,pos.y);
     ScreenDisplay::ihmsize = vec2f(size.x,size.y);
+    
+    renderGui.draw();
+
     ImGui::End();
 
     // Pour pouvoir apprendre ImGUI, on s'inspire de la fenêtre de Demo pour créer nos propres contrôles

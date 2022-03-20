@@ -12,6 +12,7 @@ add_executable(1_meshVisualization
 )
 
 target_link_libraries(1_meshVisualization
+  CHPS0941_Additions
   OpenGL::GL
   imgui
   glfw

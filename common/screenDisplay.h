@@ -19,6 +19,8 @@
 #include "mmatrix.h"
 #include "meshloader.h"
 
+#include "../render/Gui.h"
+
 class ScreenDisplay {
     public :
 
@@ -47,6 +49,7 @@ class ScreenDisplay {
     GLuint                fbTexture {0};
     Scene scene;
     OptixRender *optixRender;
+    RenderGui renderGui;
 
 public : 
 

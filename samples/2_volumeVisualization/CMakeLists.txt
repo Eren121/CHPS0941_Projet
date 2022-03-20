@@ -9,9 +9,11 @@ add_executable(2_volumeVisualization
   ${CMAKE_SOURCE_DIR}/common/meshloader.cpp
   ${CMAKE_SOURCE_DIR}/common/mmatrix.cpp
   
+  
 )
 
 target_link_libraries(2_volumeVisualization
+  CHPS0941_Additions
   OpenGL::GL
   imgui
   glfw
