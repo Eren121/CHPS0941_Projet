@@ -2,6 +2,8 @@
 
 #include <imgui.h>
 
+static bool showImGUIDemo = false;
+
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
     ScreenDisplay::updated = true;
@@ -16,6 +18,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+    
+    else if(key == GLFW_KEY_F1 && action == GLFW_PRESS)
+    {
+        // Appuyer sur F1 pour toggle la démo ImGUI
+        showImGUIDemo = !showImGUIDemo;
+    }
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -201,8 +209,10 @@ void ScreenDisplay::updateInterface(){
     ScreenDisplay::ihmsize = vec2f(size.x,size.y);
     ImGui::End();
 
-    
-    
+    // Pour pouvoir apprendre ImGUI, on s'inspire de la fenêtre de Demo pour créer nos propres contrôles
+    if(showImGUIDemo) {
+        ImGui::ShowDemoWindow(&showImGUIDemo);  
+    }
 }
 void ScreenDisplay::update(){
     Camera cam;
