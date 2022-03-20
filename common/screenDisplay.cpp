@@ -1,5 +1,6 @@
 #include "screenDisplay.h"
 
+#include <imgui.h>
 
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -19,18 +20,21 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
-        ScreenDisplay::translation = true;        
-    }
-    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
-        ScreenDisplay::translation = false; 
-    }
-    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
-        ScreenDisplay::rotation = true;        
-    }
-    else if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE){
-        ScreenDisplay::rotation = false; 
+    // évite de déplacer la caméra quand on manipule les boutons de ImGUI
+    if(!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
+    { 
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
+            ScreenDisplay::translation = true;        
+        }
+        else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
+            ScreenDisplay::translation = false; 
+        }
+        if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
+            ScreenDisplay::rotation = true;        
+        }
+        else if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE){
+            ScreenDisplay::rotation = false; 
+        }
     }
 }
 
