@@ -1,5 +1,5 @@
-#ifndef __SCREENDISPLAY_H__
-#define __SCREENDISPLAY_H__
+#ifndef SCREENDISPLAY_H
+#define SCREENDISPLAY_H
 
 #include <GL/glew.h>
 #define GLFW_INCLUDE_NONE
@@ -19,7 +19,7 @@
 #include "mmatrix.h"
 #include "meshloader.h"
 
-#include "../render/Gui.h"
+#include "../render/gui/Gui.h"
 
 class ScreenDisplay {
     public :
@@ -66,4 +66,4 @@ static bool updated;
 };
 
 
-#endif
+#endif /* SCREENDISPLAY_H */

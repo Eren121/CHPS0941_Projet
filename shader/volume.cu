@@ -20,7 +20,7 @@
 #include <optix_device.h>
 
 #include "../common/LaunchParams.h"
-#include "../render/Shader.h"
+#include "../render/ip.h"
 
   /*! launch parameters in constant memory, filled in by optix upon
       optixLaunch (this gets filled in from the buffer we pass to
@@ -78,9 +78,25 @@
         return res;
   }
   
+/**
+ * La méthode intensityProjection() accepte
+ * une classe générique en argument qui permet d'implémenter une méthode d'IP
+ * générique sans dupliquer le code.
+ * 
+ * Cette classe itère toutes les intensités de voxels rencontrés (du plus près au plus loin)
+ * et retourne la valeur
+ * correspondant à la méthode choisie suivant les voxels rencontrés.
+ * 
+ * On n'utilise pas les méthodes virtuelles (une autre façon de faire qui aurait été possible)
+ * car c'est délicat à utiliser avec CUDA quand on passe un pointeur d'une classe host -> device.
+ */
   template<typename IntensityProjection>
   __device__ void intensityProjection(IntensityProjection& ip)
   {
+    const int ix = optixGetLaunchIndex().x;
+    const int iy = optixGetLaunchIndex().y;
+    const LutData& lut = optixLaunchParams.renderingTypeOptions.lut;
+
       const VolumetricCube& data
       = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
     const int   primID = optixGetPrimitiveIndex();
@@ -98,6 +114,17 @@
     vec3f point_out = ro + time.tmax.ftmax * rd;
     vec3f ray_world = point_out - point_in;
 
+    // On est à l'intérieur de la bounding box
+    // Pour DEMIP on stocke la profondeur pour pouvoir
+    // calculer la profondeur localement à l'objet
+    // On peut récupérer la profondeur grâce à ray_world / current_ray_length
+    // Il semble que current_ray_length varie dans [0;1] 
+    // et indique la profondeur dans la bounding box
+    // current_ray_length = 1.0 => Le moins profond possible d'un point de vue de la caméra
+    // current_ray_length = 0.0 => Le plus profond possible d'un point de vue de la caméra
+
+    VoxelHitData hitData(optixLaunchParams.renderingTypeOptions);
+    
     const float stepSize_current = norme(point_out - point_in) / nbSamples;
     vec3f step_vector_tex = normalize(ray_world) * stepSize_current;
     float current_ray_length = norme(ray_world);
@@ -106,15 +133,36 @@
     float current_max = 0.0f;
     float current_intensity = 0.0f;
 
-    //Generic Intensity Projection (IP)
+    ip.setLut(lut);
+
+
+    // Il est possible qu'il n'y ai aucun point de collision
+    // Car on tire les rayons dans une AABB et donc aux bords cela peut être en dehors du modèle
+    // Cela peut êter un cas particulier pour certaines méthodes comme AIP, où on doit diviser par le nombre
+    // de voxels rencontrés (donc par zéro)
+    // Pour éviter ce cas là,
+    // On vérifie si au moins un voxel est rencontré, sinon on donne toujours une couleur par défaut.
+
+    bool atLeastOneHit = false;
 
     while(current_ray_length > 0.0f){
       vec3f pos_tex = (current_pos_tex - data.center + data.size / 2.0f) / data.size;
       current_intensity = tex3D<float>(data.tex,pos_tex.x,pos_tex.y,pos_tex.z);
 
-      if( current_intensity >= optixLaunchParams.frame.minIntensity && current_intensity <= optixLaunchParams.frame.maxIntensity){
-        if(!ip.nextVoxelHit(current_intensity)) {
-          break;
+      if(current_intensity != 0.0f) {
+        // Quoi qu'il arrive, on considère qu'une intensité 0.0 signifie du vide
+        // Géré à part pour éviter les cas où frame.minIntensity == 0.0 par ex.
+        
+
+        if( current_intensity >= optixLaunchParams.frame.minIntensity && current_intensity <= optixLaunchParams.frame.maxIntensity){
+          atLeastOneHit = true;
+          
+          hitData.intensity = current_intensity;
+          hitData.depth = 1.0f - current_ray_length;
+
+          if(!ip.nextVoxelHit(hitData)) {
+            break;
+          }
         }
       }
       
@@ -122,10 +170,25 @@
       current_ray_length -= stepSize_current;
     }
     
-    prd = vec3f(ip.getFinalIntensity());
+    if(atLeastOneHit)
+    {
+      // On n'utilise pas le cannal alpha ici,
+      // Le cannal alpha est seulement utilisé lors du traçage du rayon
+      // pour certains algorithmes (MIDA)
+      const float4 color = ip.getFinalColor();
+
+      prd = vec3f(color.x, color.y, color.z);
+      
+      // Sauvegarde en sortie (utile pour DEMIP)
+      ip.deepestDepthHit = hitData.depth;
+    }
+    else
+    {
+      prd = vec3f(0.0f); // Black
+    }
   }
 
-  __device__ void mip(){
+  __device__ void mip() {
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
      const int   primID = optixGetPrimitiveIndex();
@@ -157,8 +220,10 @@
         vec3f pos_tex = (current_pos_tex - data.center + data.size / 2.0f) / data.size;
         current_intensity = tex3D<float>(data.tex,pos_tex.x,pos_tex.y,pos_tex.z);
 
-
-        if( current_intensity >= optixLaunchParams.frame.minIntensity && current_intensity <= optixLaunchParams.frame.maxIntensity){
+        // On utilise > et pas >= car on considère qu'une intensité 0.0
+        // est toujours vide (donc même si l'utilisateur met à intensity_min = 0.0 il n'entrera
+        // pas dans la condition là ou il y a du vide)
+        if( current_intensity > optixLaunchParams.frame.minIntensity && current_intensity <= optixLaunchParams.frame.maxIntensity){
             if( current_intensity > current_max )
                 current_max = current_intensity;
 
@@ -177,10 +242,75 @@
       const VolumetricCube& data
        = (*(const sbtData*)optixGetSbtDataPointer()).volumeData;
 
-      mip();
       
-      //ip_type::MIP ip;
-      //intensityProjection(ip);
+      vec3f& prd = *(vec3f*)getPRD<vec3f>();
+      RenderingTypeOptions& options = optixLaunchParams.renderingTypeOptions;
+
+      switch(optixLaunchParams.renderingType)
+      {
+        case RENDER_MIP:
+          {
+            //mip();
+            //équivalent
+
+            MIP ip(options);
+            intensityProjection(ip);
+          }
+          break;
+
+        case RENDER_AIP:
+          {
+            AIP ip(options);
+            intensityProjection(ip);
+          }
+          break;
+
+        case RENDER_MINIP:
+          {
+            MinIP ip(options);
+            intensityProjection(ip);
+          }
+          break;
+
+        case RENDER_LMIP:
+          {
+            LMIP ip(options);
+            intensityProjection(ip);
+          }
+          break;
+
+        case RENDER_DEMIP:
+          {
+            if(options.demip.showDepthOnly)
+            {
+              DepthOnly ip(options);
+              intensityProjection(ip);
+            }
+            else
+            {
+              // On doit ici tirer 2 rayons :
+              // - le 1ier en MIP
+              // - le 2ième en DEMIP qui utilise la couleur trouvée lors du 1ier rayon
+
+              MIP ip1(options);
+              intensityProjection(ip1);
+              
+              const float4 material = ip1.getFinalColor();
+              
+              DEMIP ip2(options, material, ip1.deepestDepthHit);
+              intensityProjection(ip2);
+            }
+          }
+          break;
+
+        case RENDER_MIDA:
+          {
+            MIDA ip(options);
+            intensityProjection(ip);
+          }
+          break;
+      }
+      
   }
 
 

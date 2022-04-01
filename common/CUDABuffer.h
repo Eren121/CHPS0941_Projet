@@ -26,13 +26,13 @@ void alloc(size_t size)
 {
   assert(d_ptr == nullptr);
   this->sizeInBytes = size;
-  CUDA_CHECK(Malloc( (void**)&d_ptr, sizeInBytes));
+  CUDA_CHECK(cudaMalloc( (void**)&d_ptr, sizeInBytes));
 }
 
 //! free allocated memory
 void free()
 {
-  CUDA_CHECK(Free(d_ptr));
+  CUDA_CHECK(cudaFree(d_ptr));
   d_ptr = nullptr;
   sizeInBytes = 0;
 }
@@ -49,7 +49,7 @@ void upload(const T *t, size_t count)
 {
   assert(d_ptr != nullptr);
   assert(sizeInBytes == count*sizeof(T));
-  CUDA_CHECK(MemcpyAsync(d_ptr, (void *)t,
+  CUDA_CHECK(cudaMemcpyAsync(d_ptr, (void *)t,
                     count*sizeof(T), cudaMemcpyHostToDevice));
 }
 
@@ -58,7 +58,7 @@ void upload(const T *t, size_t count, CUstream stream)
 {
   assert(d_ptr != nullptr);
   assert(sizeInBytes == count*sizeof(T));
-  CUDA_CHECK(MemcpyAsync(d_ptr, (void *)t,
+  CUDA_CHECK(cudaMemcpyAsync(d_ptr, (void *)t,
                     count*sizeof(T), cudaMemcpyHostToDevice, stream));
 }
 template<typename T>
@@ -66,7 +66,7 @@ void download(T *t, size_t count)
 {
   assert(d_ptr != nullptr);
   assert(sizeInBytes == count*sizeof(T));
-  CUDA_CHECK(Memcpy((void *)t, d_ptr,
+  CUDA_CHECK(cudaMemcpy((void *)t, d_ptr,
                     count*sizeof(T), cudaMemcpyDeviceToHost));
 }
 
@@ -75,7 +75,7 @@ void download(T *t,size_t offset,size_t y_offset, size_t count, CUstream stream)
 {
 //  assert(d_ptr != nullptr);
 //  assert(sizeInBytes == count*sizeof(T));
-  CUDA_CHECK(MemcpyAsync((void *)(t+offset), (void*)(&((uint32_t*)d_ptr)[y_offset]),
+  CUDA_CHECK(cudaMemcpyAsync((void *)(t+offset), (void*)(&((uint32_t*)d_ptr)[y_offset]),
                     count*sizeof(T), cudaMemcpyDeviceToHost,stream));
 }
 size_t sizeInBytes { 0 };
@@ -86,12 +86,12 @@ void  *d_ptr { nullptr };
 template <typename T>
 void createOnDevice( const std::vector<T>& source, CUdeviceptr* destination )
 {
-    CUDA_CHECK(Malloc( reinterpret_cast<void**>( destination ), source.size() * sizeof( T ) ) );
+    CUDA_CHECK(cudaMalloc( reinterpret_cast<void**>( destination ), source.size() * sizeof( T ) ) );
     copyToDevice( source, *destination );
 }
 template <typename T>
 void copyToDevice( const T& source, CUdeviceptr destination )
 {
-    CUDA_CHECK(Memcpy( reinterpret_cast<void*>( destination ), &source, sizeof( T ), cudaMemcpyHostToDevice ) );
+    CUDA_CHECK(cudaMemcpy( reinterpret_cast<void*>( destination ), &source, sizeof( T ), cudaMemcpyHostToDevice ) );
 }
 #endif

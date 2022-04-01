@@ -2,8 +2,8 @@
 
 const char* const renderingTypeNames[RENDER_Count] = {
     "MIP",
-    "AIP",
     "MinIP",
+    "AIP",
     "LMIP",
     "DEMIP",
     "MIDA",

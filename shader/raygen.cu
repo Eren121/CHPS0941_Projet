@@ -129,7 +129,6 @@
     pixel = (pixel & 0xFFFFFF00) | ((uint32_t)r <<  0);
     pixel = (pixel & 0xFFFF00FF) | ((uint32_t)g <<  8);
     pixel = (pixel & 0xFF00FFFF) | ((uint32_t)b << 16);
-    pixel = (pixel & 0x00FFFFFF) | ((uint32_t)255 << 24);
-     
+    pixel = (pixel & 0x00FFFFFF) | ((uint32_t)255 << 24);     
  }
 

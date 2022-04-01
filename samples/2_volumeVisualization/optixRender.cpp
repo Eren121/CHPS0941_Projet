@@ -66,8 +66,8 @@ void OptixRender::initOptix(){
 void OptixRender::createContext(){
 // for this sample, do everything on one device
     const int deviceID = 0;
-    CUDA_CHECK(SetDevice(deviceID));
-    CUDA_CHECK(StreamCreate(&stream));
+    CUDA_CHECK(cudaSetDevice(deviceID));
+    CUDA_CHECK(cudaStreamCreate(&stream));
 
     cudaGetDeviceProperties(&deviceProps, deviceID);
 

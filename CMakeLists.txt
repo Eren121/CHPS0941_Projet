@@ -6,16 +6,20 @@ project(VSProject LANGUAGES CXX VERSION 0.0.0)
 
 if (NOT WIN32)
 # visual studio doesn't like these (not need them):
-set (CMAKE_CXX_FLAGS "--std=c++11")
+# set (CMAKE_CXX_FLAGS "--std=c++11")
 set (CUDA_PROPAGATE_HOST_FLAGS ON)
 endif()
 
+# Fix: On utilise maintenant C++17 (supporté par tous les compileurs majeurs)
+# Pour utiliser filesystem
+# de façon compiler-independant avec CMake
+set(CMAKE_CXX_STANDARD 17)
 mark_as_advanced(CUDA_SDK_ROOT_DIR)
 
 # ------------------------------------------------------------------
 # build glfw
 # ------------------------------------------------------------------
-set(OpenGL_GL_PREFERENCE LEGACY)
+#set(OpenGL_GL_PREFERENCE LEGACY)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE) #Desactive la génération de la doc
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE) #Desactive les tests
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) #Desactive la compilation des exemples
@@ -29,8 +33,8 @@ add_subdirectory(${glfw_dir} EXCLUDE_FROM_ALL)
 # build glew
 # ------------------------------------------------------------------
 set(glew_dir ${PROJECT_SOURCE_DIR}/libs/glew-2.1.0/)
-include_directories(./libs/glew-2.1.0/include)
-add_subdirectory(./libs/glew-2.1.0/build/cmake/) #chemin vers les sources de GLew 2.1.0
+include_directories(${PROJECT_SOURCE_DIR}/libs/glew-2.1.0/include)
+add_subdirectory(${glew_dir}/build/cmake/) #chemin vers les sources de GLew 2.1.0
 
 # ------------------------------------------------------------------
 # build Assimp
@@ -72,6 +76,7 @@ add_library("imgui" "${IMGUI_DIR}/imgui.cpp"
 include_directories("${IMGUI_DIR}")
 #target_include_directories(VSProject PRIVATE "${IMGUI_DIR}")
 include_directories("${IMGUI_DIR}/backends/")
+#target_link_libraries(imgui glew glfw)
 #target_include_directories(VSProject PRIVATE "${IMGUI_DIR}/backends/")
 #target_link_libraries(VSProject "imgui" "${CMAKE_DL_LIBS}")
 
@@ -79,8 +84,13 @@ include_directories("${IMGUI_DIR}/backends/")
 # build Samples
 # ------------------------------------------------------------------
 add_library(CHPS0941_Additions
-  ${PROJECT_SOURCE_DIR}/render/Gui.cpp
-  ${PROJECT_SOURCE_DIR}/render/RenderingType.cpp)
+  ${PROJECT_SOURCE_DIR}/render/gui/Gui.cpp
+  ${PROJECT_SOURCE_DIR}/render/gui/LutDirectoryScanner.cpp
+  ${PROJECT_SOURCE_DIR}/render/TextureCuda.cu
+  ${PROJECT_SOURCE_DIR}/render/Lut.cpp
+  ${PROJECT_SOURCE_DIR}/render/RenderingType.cpp
+  ${PROJECT_SOURCE_DIR}/render/CheckerboardTexture.cpp)
+target_link_libraries(CHPS0941_Additions glew_s)
 
 add_subdirectory(samples)
 

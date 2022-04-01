@@ -65,11 +65,28 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
-    ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + atVector*yoffset*0.5f;
+    if(!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
+    { 
+        const vec3f atVector = normalize(ScreenDisplay::m_camera.at - ScreenDisplay::m_camera.pos);
+        ScreenDisplay::m_camera.pos = ScreenDisplay::m_camera.pos + atVector*yoffset*0.5f;
+    }
 }
 
-
+void GLAPIENTRY
+MessageCallback( GLenum source,
+                 GLenum type,
+                 GLuint id,
+                 GLenum severity,
+                 GLsizei length,
+                 const GLchar* message,
+                 const void* userParam )
+{
+  if(type == GL_DEBUG_TYPE_ERROR) {
+    fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+            ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+                type, severity, message );
+  }
+}
 
 ScreenDisplay::ScreenDisplay(const int width, const int height, const std::string title) : m_windowTitle(title){
     ScreenDisplay::updated = false;
@@ -99,6 +116,19 @@ ScreenDisplay::ScreenDisplay(const int width, const int height, const std::strin
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetWindowSizeCallback(window, window_size_callback);
+    
+
+    // Initialise GLEW (après avoir créé la fenêtre et le contexte OpenGL!)
+    //glewExperimental = true; // Needed for core profile
+    if(glewInit() != GLEW_OK)
+    {
+        fprintf( stderr, "Failed to initialize GLEW\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // During init, enable debug output
+    glEnable              ( GL_DEBUG_OUTPUT );
+    glDebugMessageCallback( MessageCallback, 0 );
 
     //Initialisation of Imgui
    // Setup Dear ImGui context
@@ -150,6 +180,9 @@ void ScreenDisplay::createSceneEntities(){
 }
 
 void ScreenDisplay::run(){
+
+    renderGui.init(*this);
+
     while (!glfwWindowShouldClose(window))
     {
         // Start the Dear ImGui frame
@@ -208,7 +241,7 @@ void ScreenDisplay::updateInterface(){
     ScreenDisplay::ihmpos = vec2f(pos.x,pos.y);
     ScreenDisplay::ihmsize = vec2f(size.x,size.y);
     
-    renderGui.draw();
+    renderGui.draw(*this, *parameters);
 
     ImGui::End();
 

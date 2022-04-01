@@ -2,8 +2,8 @@
 
 enum RenderingType {
     RENDER_MIP,
-    RENDER_AIP,
     RENDER_MINIP,
+    RENDER_AIP,
 
     RENDER_LMIP,
     RENDER_DEMIP,

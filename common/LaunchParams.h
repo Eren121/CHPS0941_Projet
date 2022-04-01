@@ -6,9 +6,11 @@
 #include "vec.h"
 #include "camera.h"
 #include <stddef.h>
+#include "../render/RenderingType.h"
+#include "../render/RenderingTypeOption.h"
 
 #define LP64
-enum RENDER_TYPE{MIP};
+//enum RENDER_TYPE{MIP};
 
 enum OBJECT_TYPE {VOLUME_RENDERING=0,MESH_RENDERING};
 //Cette structure permet de facilement faire la liaison binaire entre un float et un unsigned int.
@@ -44,7 +46,7 @@ struct LaunchParams
         float ks = -1; 
         float minIntensity = 0.0f;
         float maxIntensity = 1.0f;
-        unsigned char renderType = MIP; 
+        //unsigned char renderType = MIP; 
     } frame;
 
     struct {
@@ -56,6 +58,8 @@ struct LaunchParams
     } camera;
     OptixTraversableHandle traversable;
 
+    RenderingType renderingType = RENDER_MIP;
+    RenderingTypeOptions renderingTypeOptions;
 };
 /*
     La structure VolumetricCube permet de faire la liaison entre l'Objet Volume utilisé sur le host et

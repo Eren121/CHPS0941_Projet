@@ -32,9 +32,9 @@
 #include <sstream>
 #include <stdexcept>
 
-#define CUDA_CHECK(call)							\
-    {									\
-      cudaError_t rc = cuda##call;                                      \
+#define CUDA_CHECK(call)							                                  \
+    {									                                                  \
+      cudaError_t rc = call;                                            \
       if (rc != cudaSuccess) {                                          \
         std::stringstream txt;                                          \
         cudaError_t err =  rc; /*cudaGetLastError();*/                  \
@@ -44,8 +44,8 @@
       }                                                                 \
     }
 
-#define CUDA_CHECK_NOEXCEPT(call)                                        \
-    {									\
+#define CUDA_CHECK_NOEXCEPT(call)                                       \
+    {									                                                  \
       cuda##call;                                                       \
     }
 
@@ -69,6 +69,14 @@
         exit( 2 );                                                      \
       }                                                                 \
   }
+
+
+#ifdef __CUDACC__
+  #define __host_device__ __host__ __device__
+#else
+  #define __host_device__
+#endif
+
 
 #endif
 

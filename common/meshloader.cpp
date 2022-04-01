@@ -202,11 +202,11 @@ void MeshLoader::createTexture(int index){
      channel_desc = cudaCreateChannelDesc<uchar4>();
 
      cudaArray_t   &pixelArray = d_array;
-     CUDA_CHECK(MallocArray(&pixelArray,
+     CUDA_CHECK(cudaMallocArray(&pixelArray,
                             &channel_desc,
                             width,height));
 
-     CUDA_CHECK(Memcpy2DToArray(pixelArray,
+     CUDA_CHECK(cudaMemcpy2DToArray(pixelArray,
                                 /* offset */0,0,
                                 h_array,
                                 pitch,pitch,height,
@@ -229,7 +229,7 @@ void MeshLoader::createTexture(int index){
      tex_desc.sRGB                = 0;
 
      // Create texture object
-     CUDA_CHECK(CreateTextureObject(&cudaTexture[index], &res_desc, &tex_desc, nullptr));
+     CUDA_CHECK(cudaCreateTextureObject(&cudaTexture[index], &res_desc, &tex_desc, nullptr));
 
     free(h_array);
 }
