@@ -134,7 +134,8 @@
     float current_intensity = 0.0f;
 
     ip.setLut(lut);
-
+    ip.point_in = make_float3(point_in.x, point_in.y, point_in.z);
+    ip.point_out = make_float3(point_out.x, point_out.y, point_out.z);
 
     // Il est possible qu'il n'y ai aucun point de collision
     // Car on tire les rayons dans une AABB et donc aux bords cela peut être en dehors du modèle
@@ -158,7 +159,7 @@
           atLeastOneHit = true;
           
           hitData.intensity = current_intensity;
-          hitData.depth = 1.0f - current_ray_length;
+          hitData.current_pos = make_float3(current_pos_tex.x, current_pos_tex.y, current_pos_tex.z);
 
           if(!ip.nextVoxelHit(hitData)) {
             break;
@@ -178,9 +179,6 @@
       const float4 color = ip.getFinalColor();
 
       prd = vec3f(color.x, color.y, color.z);
-      
-      // Sauvegarde en sortie (utile pour DEMIP)
-      ip.deepestDepthHit = hitData.depth;
     }
     else
     {
@@ -297,7 +295,7 @@
               
               const float4 material = ip1.getFinalColor();
               
-              DEMIP ip2(options, material, ip1.deepestDepthHit);
+              DEMIP ip2(options, material);
               intensityProjection(ip2);
             }
           }

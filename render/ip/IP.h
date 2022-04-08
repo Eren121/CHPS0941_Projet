@@ -32,12 +32,10 @@ public:
     __device__ void setLut(const LutData& lut) {
         this->lut = &lut;
     }
-    
-    /**
-     * Donnée de sortie du shader, contient la profondeur maximale rencontrée.
-     * Utilisé par la première passe de DEMIP.
-     */
-    float deepestDepthHit = 0.0f;
+
+    // Entrées / sorties de la boîte englobante initialisées par le shader
+    vec3f point_in;
+    vec3f point_out;
 
 protected:
     /**
@@ -50,6 +48,7 @@ protected:
     }
 
     const RenderingTypeOptions& options;
+
 
 private:
     const LutData* lut;

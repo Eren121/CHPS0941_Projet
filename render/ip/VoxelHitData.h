@@ -17,5 +17,6 @@ struct VoxelHitData
     const RenderingTypeOptions& options; // Les options du GUI
     const LutData& lut; // Table des couleurs (intensité => couleur)
     float intensity; // L'intensité du voxel courant
-    float depth; // Vaut 0.0 pour les voxels les plus proches, 1.0 pour les plus loins
+
+    vec3f current_pos; // Position courante du voxel dans le monde
 };

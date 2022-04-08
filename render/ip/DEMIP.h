@@ -18,11 +18,10 @@ public:
      * @param mipMaterial Le matériau de l'intensité du rayon MIP tiré précédemment
      * @param mipDepth La profondeur du matériau rencontrée (dans [0;1])
      */
-    __device__ DEMIP(const RenderingTypeOptions& options, float4 mipMaterial, float mipDepth)
+    __device__ DEMIP(const RenderingTypeOptions& options, float4 mipMaterial)
         : IP(options),
           m_tolerance(options.demip.tolerance),
-          m_material(mipMaterial),
-          m_depth(mipDepth)
+          m_material(mipMaterial)
     {
     }
 
@@ -35,7 +34,7 @@ public:
             // On a trouvé le premier matériau similaire
 
             const float dw = hitData.options.demip.dw;
-            const float depth = m_depth - hitData.depth;
+            const float depth = norme(point_in - hitData.current_pos) / norme(point_out - point_in);
 
             // color = MIPcolor ∗ (1−dw) +2 ∗ dw ∗ (1−depth)
             m_finalColor = m_material * (1.0f - dw) + 2.0f * dw * (1.0f - depth);
@@ -65,7 +64,6 @@ private:
 
 private:
     float m_tolerance;
-    float m_depth;
     float4 m_material;
     float4 m_finalColor = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
 };

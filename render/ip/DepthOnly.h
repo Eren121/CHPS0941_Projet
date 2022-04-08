@@ -15,7 +15,7 @@ public:
     {
         // Termine directement dès le premier voxel rencontré,
         // et on stocke sa profondeur
-        m_depth = hitData.depth;
+        m_depth = norme(hitData.current_pos - point_in) / norme(point_in - point_out);
         return false;
     }
 
